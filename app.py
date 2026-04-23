@@ -313,44 +313,76 @@ p { color: rgba(210,210,240,0.85) !important; }
 
 
 # ═════════════════════════════════════════════════════════════
-#  SIRI-LIKE ALEX COMPONENT  (full-featured voice AI in browser)
+#  GOOGLE VOICE ASSISTANT COMPONENT  (Live STT + TTS + AI + Mobile)
 # ═════════════════════════════════════════════════════════════
-def alex_siri_component(height=700, api_key="", lang_bcp="en-US"):
+def alex_siri_component(height=820, api_key="", lang_bcp="en-US"):
     html = f"""<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;700&family=Outfit:wght@300;400;600;700&display=swap');
-*{{margin:0;padding:0;box-sizing:border-box;}}
-body{{
-  background:transparent;
-  font-family:'Outfit',sans-serif;
-  color:white;
-  min-height:100vh;
-  overflow-x:hidden;
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+*{{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}}
+html,body{{
+  background:transparent;font-family:'Outfit',sans-serif;color:white;
+  overflow-x:hidden;height:100%;
+  /* Mobile safe area */
+  padding-bottom:env(safe-area-inset-bottom);
 }}
 
 /* ── Root layout ── */
 .wrap{{
-  display:flex; flex-direction:column; align-items:center;
-  padding:20px 16px 30px; gap:18px; max-width:580px; margin:0 auto;
+  display:flex;flex-direction:column;align-items:center;
+  padding:14px 12px 20px;gap:14px;max-width:600px;margin:0 auto;
+  width:100%;
 }}
 
-/* ── Alex title ── */
+/* ── Header ── */
 .alex-title{{
-  font-size:30px; font-weight:700; letter-spacing:4px;
-  background: linear-gradient(90deg,#c84b9e,#7b2ff7,#e8294c,#ff6b35);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  font-size:clamp(22px,5vw,30px);font-weight:700;letter-spacing:4px;
+  background:linear-gradient(90deg,#c84b9e,#7b2ff7,#e8294c,#ff6b35);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
 }}
-.alex-sub{{font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:3px;margin-top:-10px;}}
+.alex-sub{{font-size:clamp(9px,2vw,11px);color:rgba(255,255,255,.4);letter-spacing:3px;margin-top:-8px;}}
+
+/* ── Lang + Mode bar ── */
+.top-bar{{display:flex;gap:8px;width:100%;flex-wrap:wrap;}}
+.lang-grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:100%;}}
+.lang-btn{{
+  background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.12);
+  border-radius:10px;color:rgba(255,255,255,.7);padding:7px 4px;font-size:11px;
+  cursor:pointer;transition:all .2s;text-align:center;font-family:'Outfit',sans-serif;
+  -webkit-user-select:none;user-select:none;
+}}
+.lang-btn:active{{transform:scale(.94);}}
+.lang-btn.active{{
+  background:linear-gradient(135deg,rgba(200,75,158,.4),rgba(123,47,247,.4));
+  border-color:rgba(200,75,158,.7);color:white;font-weight:600;
+  box-shadow:0 0 12px rgba(200,75,158,.3);
+}}
+
+/* ── API key ── */
+.key-row{{display:flex;gap:8px;width:100%;align-items:center;}}
+.key-inp{{
+  flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;color:white;padding:10px 14px;font-size:13px;outline:none;
+  font-family:'Outfit',sans-serif;min-width:0;
+}}
+.key-inp::placeholder{{color:rgba(255,255,255,.22);}}
+.key-inp:focus{{border-color:rgba(123,47,247,.6);}}
+.save-btn{{
+  background:linear-gradient(135deg,#7b2ff7,#e8294c);border:none;
+  color:white;padding:10px 14px;border-radius:12px;cursor:pointer;
+  font-size:12px;font-weight:600;white-space:nowrap;
+}}
 
 /* ── Orb ── */
-.orb-wrap{{position:relative;width:210px;height:210px;cursor:pointer;user-select:none;}}
+.orb-wrap{{position:relative;width:clamp(160px,40vw,200px);height:clamp(160px,40vw,200px);cursor:pointer;user-select:none;flex-shrink:0;}}
 .orb-ring{{
-  position:absolute; border-radius:50%;
-  border:1.5px solid rgba(200,75,158,0.35);
-  width:210px;height:210px; top:0;left:0;
+  position:absolute;border-radius:50%;
+  border:1.5px solid rgba(200,75,158,.35);
+  width:100%;height:100%;top:0;left:0;
   animation:ringOut 2.5s ease-out infinite;
 }}
 .orb-ring:nth-child(2){{animation-delay:.85s;}}
@@ -358,161 +390,180 @@ body{{
 @keyframes ringOut{{0%{{transform:scale(1);opacity:.9;}}100%{{transform:scale(1.9);opacity:0;}}}}
 
 .orb{{
-  position:absolute; top:15px;left:15px;
-  width:180px;height:180px; border-radius:50%;
-  background: radial-gradient(circle at 33% 30%, #c84b9e 0%, #7b2ff7 40%, #e8294c 75%, #ff6b35 100%);
-  box-shadow: 0 0 50px rgba(200,75,158,.7), 0 0 100px rgba(123,47,247,.4), inset 0 0 50px rgba(255,255,255,.07);
+  position:absolute;top:8%;left:8%;
+  width:84%;height:84%;border-radius:50%;
+  background:radial-gradient(circle at 33% 30%,#c84b9e 0%,#7b2ff7 40%,#e8294c 75%,#ff6b35 100%);
+  box-shadow:0 0 50px rgba(200,75,158,.7),0 0 100px rgba(123,47,247,.4),inset 0 0 40px rgba(255,255,255,.07);
   animation:orbHover 3.5s ease-in-out infinite;
-  transition: background .6s;
-  display:flex;align-items:center;justify-content:center;
-  overflow:hidden;
+  transition:background .6s;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
 }}
-.orb::after{{
-  content:''; position:absolute;top:18%;left:18%;
-  width:32%;height:28%;
-  background:radial-gradient(circle,rgba(255,255,255,.45),transparent);
-  border-radius:50%;
-  pointer-events:none;
-}}
+.orb::after{{content:'';position:absolute;top:18%;left:18%;width:32%;height:28%;
+  background:radial-gradient(circle,rgba(255,255,255,.45),transparent);border-radius:50%;pointer-events:none;}}
 @keyframes orbHover{{
-  0%,100%{{transform:translateY(0) scale(1); box-shadow:0 0 50px rgba(200,75,158,.7),0 0 100px rgba(123,47,247,.4);}}
-  50%{{transform:translateY(-12px) scale(1.025); box-shadow:0 18px 70px rgba(200,75,158,.9),0 0 140px rgba(123,47,247,.5);}}
+  0%,100%{{transform:translateY(0) scale(1);box-shadow:0 0 50px rgba(200,75,158,.7),0 0 100px rgba(123,47,247,.4);}}
+  50%{{transform:translateY(-10px) scale(1.025);box-shadow:0 18px 70px rgba(200,75,158,.9),0 0 140px rgba(123,47,247,.5);}}
 }}
-.orb.listening{{
-  background: radial-gradient(circle at 33% 30%,#ff6644,#e8294c 40%,#ff0080 100%) !important;
-  animation:orbPulse .7s ease-in-out infinite !important;
-}}
-.orb.thinking{{
-  background: radial-gradient(circle at 33% 30%,#ffd740,#ff6d00 40%,#ff1744 100%) !important;
-  animation:orbSpin 1.2s linear infinite !important;
-}}
-.orb.speaking{{
-  background: radial-gradient(circle at 33% 30%,#69f0ae,#00bcd4 40%,#3d5afe 100%) !important;
-  animation:orbPulse .45s ease-in-out infinite !important;
-}}
+.orb.listening{{background:radial-gradient(circle at 33% 30%,#ff6644,#e8294c 40%,#ff0080 100%)!important;animation:orbPulse .65s ease-in-out infinite!important;}}
+.orb.thinking{{background:radial-gradient(circle at 33% 30%,#ffd740,#ff6d00 40%,#ff1744 100%)!important;animation:orbSpin 1.2s linear infinite!important;}}
+.orb.speaking{{background:radial-gradient(circle at 33% 30%,#69f0ae,#00bcd4 40%,#3d5afe 100%)!important;animation:orbPulse .4s ease-in-out infinite!important;}}
 @keyframes orbPulse{{0%,100%{{transform:scale(1);}}50%{{transform:scale(1.08);}}}}
 @keyframes orbSpin{{from{{filter:hue-rotate(0deg);}}to{{filter:hue-rotate(360deg);}}}}
 
-/* Waveform inside orb (shows when active) */
-.orb-wave{{display:flex;align-items:center;gap:5px;opacity:0;transition:opacity .35s;}}
+.orb-wave{{display:flex;align-items:center;gap:4px;opacity:0;transition:opacity .35s;}}
 .orb.listening .orb-wave,.orb.speaking .orb-wave{{opacity:1;}}
 .owb{{width:4px;border-radius:4px;background:rgba(255,255,255,.9);animation:wvBar .5s ease-in-out infinite alternate;}}
-.owb:nth-child(1){{height:10px;animation-delay:0s;}}
-.owb:nth-child(2){{height:22px;animation-delay:.07s;}}
-.owb:nth-child(3){{height:34px;animation-delay:.14s;}}
-.owb:nth-child(4){{height:46px;animation-delay:.1s;}}
-.owb:nth-child(5){{height:34px;animation-delay:.05s;}}
-.owb:nth-child(6){{height:22px;animation-delay:.12s;}}
-.owb:nth-child(7){{height:10px;animation-delay:.18s;}}
+.owb:nth-child(1){{height:8px;animation-delay:0s;}}
+.owb:nth-child(2){{height:18px;animation-delay:.07s;}}
+.owb:nth-child(3){{height:30px;animation-delay:.14s;}}
+.owb:nth-child(4){{height:42px;animation-delay:.1s;}}
+.owb:nth-child(5){{height:30px;animation-delay:.05s;}}
+.owb:nth-child(6){{height:18px;animation-delay:.12s;}}
+.owb:nth-child(7){{height:8px;animation-delay:.18s;}}
 @keyframes wvBar{{from{{transform:scaleY(.3);}}to{{transform:scaleY(1);}}}}
 
-/* Status */
-.status{{font-size:14px;color:rgba(255,255,255,.6);letter-spacing:1.5px;min-height:22px;}}
+/* ── Status ── */
+.status-row{{display:flex;flex-direction:column;align-items:center;gap:4px;}}
+.status{{font-size:clamp(11px,2.5vw,14px);color:rgba(255,255,255,.6);letter-spacing:1.5px;min-height:20px;text-align:center;}}
+.interim{{font-size:12px;color:rgba(200,150,255,.8);min-height:16px;font-style:italic;}}
+.confidence-badge{{font-size:10px;color:rgba(0,230,118,.8);display:none;}}
 
-/* Bottom waveform strip */
-.wave-strip{{display:flex;align-items:center;gap:3px;height:44px;opacity:0;transition:opacity .3s;}}
+/* ── Waveform ── */
+.wave-strip{{display:flex;align-items:center;gap:2px;height:36px;opacity:0;transition:opacity .3s;}}
 .wave-strip.on{{opacity:1;}}
 .wsb{{width:3px;border-radius:3px;background:linear-gradient(180deg,#c84b9e,#7b2ff7);animation:wsAnim .5s ease-in-out infinite alternate;}}
-@keyframes wsAnim{{from{{height:3px;opacity:.35;}}to{{height:36px;opacity:1;}}}}
+@keyframes wsAnim{{from{{height:3px;opacity:.35;}}to{{height:30px;opacity:1;}}}}
 
-/* ── Controls ── */
-.controls{{display:flex;gap:12px;align-items:center;}}
-.mic-btn{{
-  width:60px;height:60px;border-radius:50%;
-  background:linear-gradient(135deg,#e8294c,#aa1030);
-  border:none;color:white;font-size:24px;cursor:pointer;
-  box-shadow:0 4px 22px rgba(232,41,76,.55);
-  transition:all .25s; display:flex;align-items:center;justify-content:center;
+/* ── Chips ── */
+.chips{{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;width:100%;}}
+.chip{{
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);
+  border-radius:100px;padding:6px 13px;font-size:clamp(10px,2vw,12px);cursor:pointer;
+  transition:all .2s;color:rgba(255,255,255,.75);-webkit-user-select:none;user-select:none;
 }}
-.mic-btn:hover{{transform:scale(1.12);box-shadow:0 8px 34px rgba(232,41,76,.75);}}
-.mic-btn.on{{background:linear-gradient(135deg,#ff4444,#cc0000)!important;animation:micPulse 1s infinite;}}
-@keyframes micPulse{{0%,100%{{box-shadow:0 4px 22px rgba(255,68,68,.5);}}50%{{box-shadow:0 4px 44px rgba(255,68,68,.9),0 0 0 12px rgba(255,68,68,.15);}}}}
-
-/* ── Settings row ── */
-.settings-row{{display:flex;gap:10px;width:100%;}}
-.sel{{
-  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);
-  border-radius:11px;color:white;padding:9px 14px;font-size:13px;cursor:pointer;flex-shrink:0;
-}}
-.key-inp{{
-  flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);
-  border-radius:11px;color:white;padding:9px 14px;font-size:13px;outline:none;
-}}
-.key-inp:focus{{border-color:rgba(123,47,247,.6);}}
-.key-inp::placeholder{{color:rgba(255,255,255,.25);}}
+.chip:active{{transform:scale(.93);}}
+.chip:hover{{background:rgba(200,75,158,.25);border-color:rgba(200,75,158,.5);color:white;}}
 
 /* ── Chat ── */
-.chat-box{{width:100%;max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 2px;}}
+.chat-box{{
+  width:100%;max-height:220px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:9px;padding:4px 2px;
+  -webkit-overflow-scrolling:touch;
+}}
 .msg-u{{
   background:linear-gradient(135deg,rgba(232,41,76,.75),rgba(170,16,48,.75));
-  backdrop-filter:blur(10px);
-  padding:10px 16px;border-radius:18px 18px 4px 18px;
-  align-self:flex-end;max-width:82%;font-size:13.5px;line-height:1.5;
+  backdrop-filter:blur(10px);padding:9px 14px;
+  border-radius:18px 18px 4px 18px;
+  align-self:flex-end;max-width:85%;font-size:clamp(12px,2.5vw,13.5px);line-height:1.5;
 }}
 .msg-a{{
-  background:rgba(123,47,247,.22);border:1px solid rgba(123,47,247,.3);
-  backdrop-filter:blur(10px);
-  padding:10px 16px;border-radius:18px 18px 18px 4px;
-  align-self:flex-start;max-width:85%;font-size:13.5px;line-height:1.5;
+  background:rgba(123,47,247,.22);border:1px solid rgba(123,47,247,.28);
+  backdrop-filter:blur(10px);padding:9px 14px;
+  border-radius:18px 18px 18px 4px;
+  align-self:flex-start;max-width:88%;font-size:clamp(12px,2.5vw,13.5px);line-height:1.5;
 }}
 .ml{{font-size:10px;opacity:.5;margin-bottom:3px;}}
+.msg-actions{{display:flex;gap:6px;margin-top:6px;}}
+.replay-btn{{
+  background:rgba(255,255,255,.1);border:none;color:white;
+  font-size:11px;padding:3px 10px;border-radius:100px;cursor:pointer;
+}}
 ::-webkit-scrollbar{{width:3px;}}
 ::-webkit-scrollbar-thumb{{background:rgba(255,255,255,.18);border-radius:2px;}}
 
-/* ── Text input row ── */
-.tinput-row{{display:flex;gap:10px;width:100%;align-items:center;}}
+/* ── Input row ── */
+.tinput-row{{display:flex;gap:8px;width:100%;align-items:center;}}
 .tinput{{
-  flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);
-  border-radius:28px;color:white;padding:13px 20px;font-size:14px;outline:none;
-  font-family:'Outfit',sans-serif;
+  flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);
+  border-radius:26px;color:white;padding:12px 18px;font-size:clamp(13px,3vw,14px);
+  outline:none;font-family:'Outfit',sans-serif;min-width:0;
+  /* Mobile font size prevents zoom */
+  font-size:16px;
 }}
 .tinput:focus{{border-color:rgba(123,47,247,.6);}}
-.tinput::placeholder{{color:rgba(255,255,255,.28);}}
-.send-btn{{
-  width:50px;height:50px;border-radius:50%;
-  background:linear-gradient(135deg,#7b2ff7,#e8294c);
-  border:none;color:white;font-size:20px;cursor:pointer;transition:all .22s;
-  display:flex;align-items:center;justify-content:center;
-}}
-.send-btn:hover{{transform:scale(1.12);}}
+.tinput::placeholder{{color:rgba(255,255,255,.25);}}
 
-/* ── Quick chips ── */
-.chips{{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}}
-.chip{{
-  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);
-  border-radius:100px;padding:6px 14px;font-size:12px;cursor:pointer;transition:all .2s;
-  color:rgba(255,255,255,.75);
+.mic-fab{{
+  width:52px;height:52px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#e8294c,#aa1030);
+  border:none;color:white;font-size:22px;cursor:pointer;
+  box-shadow:0 4px 20px rgba(232,41,76,.5);transition:all .25s;
+  display:flex;align-items:center;justify-content:center;
+  touch-action:manipulation;
 }}
-.chip:hover{{background:rgba(200,75,158,.25);border-color:rgba(200,75,158,.5);color:white;}}
+.mic-fab:active{{transform:scale(.9);}}
+.mic-fab.on{{background:linear-gradient(135deg,#ff4444,#cc0000)!important;animation:micPulse .9s infinite;}}
+@keyframes micPulse{{0%,100%{{box-shadow:0 4px 20px rgba(255,68,68,.5);}}50%{{box-shadow:0 4px 40px rgba(255,68,68,.9),0 0 0 10px rgba(255,68,68,.12);}}}}
+
+.send-fab{{
+  width:52px;height:52px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#7b2ff7,#e8294c);
+  border:none;color:white;font-size:20px;cursor:pointer;
+  transition:all .22s;display:flex;align-items:center;justify-content:center;
+  touch-action:manipulation;
+}}
+.send-fab:active{{transform:scale(.9);}}
+
+/* ── Continuous mode toggle ── */
+.cont-toggle{{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:100px;padding:6px 14px;cursor:pointer;font-size:12px;
+  color:rgba(255,255,255,.6);transition:all .2s;width:100%;justify-content:center;
+}}
+.cont-toggle.active{{background:rgba(0,230,118,.12);border-color:rgba(0,230,118,.4);color:#00e676;}}
+.toggle-dot{{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.25);transition:all .2s;}}
+.cont-toggle.active .toggle-dot{{background:#00e676;box-shadow:0 0 6px #00e676;}}
+
+/* ── Error banner ── */
+.err-banner{{
+  width:100%;background:rgba(232,41,76,.15);border:1px solid rgba(232,41,76,.4);
+  border-radius:12px;padding:10px 14px;font-size:12px;color:#ff8099;display:none;
+}}
+
+/* ── Voice provider badge ── */
+.provider-badge{{
+  font-size:10px;color:rgba(255,255,255,.3);letter-spacing:1px;
+}}
 </style>
 </head>
 <body>
 <div class="wrap">
 
+  <!-- Header -->
   <div class="alex-title">✦ ALEX</div>
-  <div class="alex-sub">AI CARDIAC HEALTH ASSISTANT</div>
+  <div class="alex-sub">GOOGLE VOICE AI · CARDIAC ASSISTANT</div>
+  <div class="provider-badge" id="providerBadge">🟢 Google Speech Recognition · Ready</div>
 
-  <!-- Settings -->
-  <div class="settings-row">
-    <select id="langSel" class="sel" onchange="updateLang()">
-      <option value="en-US" {'selected' if lang_bcp.startswith('en') else ''}>🇬🇧 English</option>
-      <option value="hi-IN" {'selected' if lang_bcp.startswith('hi') else ''}>🇮🇳 Hindi</option>
-      <option value="kn-IN" {'selected' if lang_bcp.startswith('kn') else ''}>🇮🇳 Kannada</option>
-      <option value="ta-IN" {'selected' if lang_bcp.startswith('ta') else ''}>🇮🇳 Tamil</option>
-      <option value="te-IN" {'selected' if lang_bcp.startswith('te') else ''}>🇮🇳 Telugu</option>
-      <option value="ml-IN" {'selected' if lang_bcp.startswith('ml') else ''}>🇮🇳 Malayalam</option>
-    </select>
-    <input id="apiKey" class="key-inp" type="password"
-      value="{api_key}"
-      placeholder="Anthropic API key (optional – for live AI)" />
+  <!-- Language Grid -->
+  <div class="lang-grid" id="langGrid">
+    <div class="lang-btn {'active' if lang_bcp.startswith('en') else ''}" onclick="setLang('en-US',this)">🇬🇧<br>English</div>
+    <div class="lang-btn {'active' if lang_bcp.startswith('hi') else ''}" onclick="setLang('hi-IN',this)">🇮🇳<br>हिंदी</div>
+    <div class="lang-btn {'active' if lang_bcp.startswith('kn') else ''}" onclick="setLang('kn-IN',this)">🇮🇳<br>ಕನ್ನಡ</div>
+    <div class="lang-btn {'active' if lang_bcp.startswith('ta') else ''}" onclick="setLang('ta-IN',this)">🇮🇳<br>தமிழ்</div>
+    <div class="lang-btn {'active' if lang_bcp.startswith('te') else ''}" onclick="setLang('te-IN',this)">🇮🇳<br>తెలుగు</div>
+    <div class="lang-btn {'active' if lang_bcp.startswith('ml') else ''}" onclick="setLang('ml-IN',this)">🇮🇳<br>മലയാ</div>
+    <div class="lang-btn" onclick="setLang('fr-FR',this)">🇫🇷<br>Français</div>
+    <div class="lang-btn" onclick="setLang('de-DE',this)">🇩🇪<br>Deutsch</div>
   </div>
 
+  <!-- API Key -->
+  <div class="key-row">
+    <input id="apiKey" class="key-inp" type="password"
+      value="{api_key}"
+      placeholder="🔑 Anthropic API key for live AI (optional)" />
+    <button class="save-btn" onclick="saveKey()">Save</button>
+  </div>
+
+  <!-- Error Banner -->
+  <div class="err-banner" id="errBanner"></div>
+
   <!-- Orb -->
-  <div class="orb-wrap" id="orbWrap">
+  <div class="orb-wrap" id="orbWrap" onclick="handleOrbClick()" role="button" aria-label="Tap to speak">
     <div class="orb-ring"></div>
     <div class="orb-ring"></div>
     <div class="orb-ring"></div>
-    <div class="orb" id="alexOrb" onclick="handleOrbClick()">
+    <div class="orb" id="alexOrb">
       <div class="orb-wave">
         <div class="owb"></div><div class="owb"></div><div class="owb"></div>
         <div class="owb"></div><div class="owb"></div><div class="owb"></div>
@@ -521,108 +572,292 @@ body{{
     </div>
   </div>
 
-  <div class="status" id="statusTxt">Tap Alex to speak</div>
+  <!-- Status -->
+  <div class="status-row">
+    <div class="status" id="statusTxt">Tap Alex or 🎤 to speak</div>
+    <div class="interim" id="interimTxt"></div>
+    <div class="confidence-badge" id="confBadge"></div>
+  </div>
 
-  <!-- Wave strip -->
+  <!-- Wave Strip -->
   <div class="wave-strip" id="waveStrip"></div>
+
+  <!-- Continuous Mode Toggle -->
+  <div class="cont-toggle" id="contToggle" onclick="toggleContinuous()">
+    <div class="toggle-dot" id="toggleDot"></div>
+    <span id="contLabel">Continuous Listen Mode: OFF</span>
+  </div>
 
   <!-- Quick chips -->
   <div class="chips">
     <div class="chip" onclick="ask('What are heart disease symptoms?')">❤️ Symptoms</div>
-    <div class="chip" onclick="ask('How to lower cholesterol?')">🧪 Cholesterol</div>
-    <div class="chip" onclick="ask('What is high blood pressure?')">💉 Blood Pressure</div>
-    <div class="chip" onclick="ask('Tips for heart health?')">💪 Heart Tips</div>
-    <div class="chip" onclick="ask('When should I see a doctor?')">👨‍⚕️ See Doctor</div>
-    <div class="chip" onclick="ask('What does my ECG mean?')">📊 ECG</div>
+    <div class="chip" onclick="ask('How to lower my cholesterol?')">🧪 Cholesterol</div>
+    <div class="chip" onclick="ask('What is high blood pressure?')">💉 BP Info</div>
+    <div class="chip" onclick="ask('Tips for a healthy heart?')">💪 Heart Tips</div>
+    <div class="chip" onclick="ask('When should I see a cardiologist?')">👨‍⚕️ Doctor</div>
+    <div class="chip" onclick="ask('How to read my ECG report?')">📊 ECG</div>
+    <div class="chip" onclick="ask('What foods are good for the heart?')">🥑 Diet</div>
+    <div class="chip" onclick="ask('How does stress affect my heart?')">🧘 Stress</div>
   </div>
 
-  <!-- Chat -->
+  <!-- Chat box -->
   <div class="chat-box" id="chatBox"></div>
 
-  <!-- Text input + Mic -->
+  <!-- Text + Mic input -->
   <div class="tinput-row">
-    <button class="mic-btn" id="micBtn" onclick="handleOrbClick()">🎤</button>
-    <input class="tinput" id="txtInput" placeholder="Or type a question here..."
-      onkeydown="if(event.key==='Enter')sendTxt()"/>
-    <button class="send-btn" onclick="sendTxt()">➤</button>
+    <button class="mic-fab" id="micFab" onclick="handleOrbClick()" aria-label="Microphone">🎤</button>
+    <input class="tinput" id="txtInput" placeholder="Type a question..."
+      onkeydown="if(event.key==='Enter')sendTxt()"
+      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+    <button class="send-fab" onclick="sendTxt()" aria-label="Send">➤</button>
   </div>
 
-</div><!-- /wrap -->
+</div>
 
 <script>
-// ─── Build wave strip ─────────────────────────────────────
-const strip = document.getElementById('waveStrip');
-for(let i=0;i<32;i++){{
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+let currentLang = '{lang_bcp}';
+let recog = null;
+let isListening = false;
+let continuousMode = false;
+let isSpeaking = false;
+let chatHistory = [];
+
+const langMap = {{
+  'en-US':'English','hi-IN':'Hindi','kn-IN':'Kannada',
+  'ta-IN':'Tamil','te-IN':'Telugu','ml-IN':'Malayalam',
+  'fr-FR':'French','de-DE':'German'
+}};
+
+const langGreetings = {{
+  'en-US':'Hello! I am Alex. How can I help you today?',
+  'hi-IN':'नमस्ते! मैं Alex हूँ। आज मैं आपकी कैसे मदद कर सकता हूँ?',
+  'kn-IN':'ನಮಸ್ಕಾರ! ನಾನು Alex. ಇಂದು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?',
+  'ta-IN':'வணக்கம்! நான் Alex. இன்று நான் உங்களுக்கு எப்படி உதவலாம்?',
+  'te-IN':'నమస్కారం! నేను Alex. ఈరోజు మీకు ఎలా సహాయపడగలను?',
+  'ml-IN':'നമസ്കാരം! ഞാൻ Alex ആണ്. ഇന്ന് ഞാൻ എങ്ങനെ സഹായിക്കാം?',
+  'fr-FR':'Bonjour! Je suis Alex. Comment puis-je vous aider?',
+  'de-DE':'Hallo! Ich bin Alex. Wie kann ich Ihnen helfen?'
+}};
+
+// ═══════════════════════════════════════════════════
+//  DOM REFS
+// ═══════════════════════════════════════════════════
+const orb       = document.getElementById('alexOrb');
+const statusEl  = document.getElementById('statusTxt');
+const interimEl = document.getElementById('interimTxt');
+const confBadge = document.getElementById('confBadge');
+const micFab    = document.getElementById('micFab');
+const chatBox   = document.getElementById('chatBox');
+const waveStrip = document.getElementById('waveStrip');
+const errBanner = document.getElementById('errBanner');
+const provider  = document.getElementById('providerBadge');
+
+// ═══════════════════════════════════════════════════
+//  BUILD WAVE STRIP
+// ═══════════════════════════════════════════════════
+for(let i=0;i<28;i++){{
   const b=document.createElement('div');
   b.className='wsb';
-  b.style.animationDelay=(i*.045)+'s';
-  b.style.animationDuration=(.28+Math.random()*.36)+'s';
-  strip.appendChild(b);
+  b.style.animationDelay=(i*.05)+'s';
+  b.style.animationDuration=(.3+Math.random()*.35)+'s';
+  waveStrip.appendChild(b);
 }}
 
-const orb     = document.getElementById('alexOrb');
-const status  = document.getElementById('statusTxt');
-const micBtn  = document.getElementById('micBtn');
-const chatBox = document.getElementById('chatBox');
-
-let recog=null, isListening=false;
-const langMap={{'en-US':'English','hi-IN':'Hindi','kn-IN':'Kannada','ta-IN':'Tamil','te-IN':'Telugu','ml-IN':'Malayalam'}};
-
-// ─── State helpers ────────────────────────────────────────
+// ═══════════════════════════════════════════════════
+//  STATE MACHINE
+// ═══════════════════════════════════════════════════
 function setState(s,txt){{
   orb.className='orb '+(s||'');
-  strip.className='wave-strip'+((s==='listening'||s==='speaking')?' on':'');
-  status.textContent=txt;
-  micBtn.className='mic-btn'+(s==='listening'?' on':'');
-  micBtn.textContent=s==='listening'?'⏸':s==='speaking'?'🔊':s==='thinking'?'⏳':'🎤';
+  waveStrip.className='wave-strip'+((s==='listening'||s==='speaking')?' on':'');
+  statusEl.textContent=txt;
+  if(s!=='listening') interimEl.textContent='';
+  micFab.className='mic-fab'+(s==='listening'?' on':'');
+  micFab.textContent=s==='listening'?'⏸':s==='speaking'?'🔊':s==='thinking'?'⏳':'🎤';
 }}
-setState('','Tap Alex to speak');
+setState('','Tap Alex or 🎤 to speak');
 
-// ─── Voice input ─────────────────────────────────────────
+// ═══════════════════════════════════════════════════
+//  LANGUAGE SWITCHER
+// ═══════════════════════════════════════════════════
+function setLang(bcp, btn){{
+  currentLang=bcp;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  provider.textContent='🟢 Google Speech · '+langMap[bcp];
+  // stop any active recognition
+  if(recog){{ recog.stop(); recog=null; isListening=false; }}
+  setState('','Language: '+langMap[bcp]+' — Tap to speak');
+}}
+
+// ═══════════════════════════════════════════════════
+//  API KEY SAVE
+// ═══════════════════════════════════════════════════
+function saveKey(){{
+  const k=document.getElementById('apiKey').value.trim();
+  if(k){{
+    showErr('');
+    provider.textContent='🟣 Google Voice + Claude AI · '+langMap[currentLang];
+    setState('','API key saved! Tap to speak');
+  }}
+}}
+
+// ═══════════════════════════════════════════════════
+//  ERROR HELPER
+// ═══════════════════════════════════════════════════
+function showErr(msg){{
+  errBanner.style.display=msg?'block':'none';
+  errBanner.textContent=msg;
+}}
+
+// ═══════════════════════════════════════════════════
+//  CONTINUOUS MODE
+// ═══════════════════════════════════════════════════
+function toggleContinuous(){{
+  continuousMode=!continuousMode;
+  const tog=document.getElementById('contToggle');
+  const lbl=document.getElementById('contLabel');
+  tog.className='cont-toggle'+(continuousMode?' active':'');
+  document.getElementById('toggleDot').className='toggle-dot';
+  lbl.textContent='Continuous Listen Mode: '+(continuousMode?'ON':'OFF');
+  if(continuousMode) startListen();
+  else {{ if(recog){{recog.stop();recog=null;}} isListening=false; setState('','Tap to speak'); }}
+}}
+
+// ═══════════════════════════════════════════════════
+//  GOOGLE SPEECH RECOGNITION (Web Speech API)
+// ═══════════════════════════════════════════════════
 function handleOrbClick(){{ isListening?stopListen():startListen(); }}
 
 function startListen(){{
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){{ addMsg('alex','Voice input is not supported in this browser. Please type your question instead.'); return; }}
-  recog=new SR();
-  recog.lang=document.getElementById('langSel').value;
-  recog.interimResults=false; recog.maxAlternatives=1;
-  recog.onstart=()=>{{ isListening=true; setState('listening','Listening — speak now...'); }};
-  recog.onresult=e=>{{ stopListen(); handleQ(e.results[0][0].transcript); }};
-  recog.onerror=()=>{{ stopListen(); setState('','Could not hear you — try again'); }};
-  recog.onend=()=>{{ if(isListening)stopListen(); }};
-  recog.start();
-}}
-function stopListen(){{ if(recog){{recog.stop();recog=null;}} isListening=false; }}
+  if(!SR){{
+    showErr('⚠️ Your browser does not support Speech Recognition. Use Chrome or Edge on desktop, or Safari on iOS. You can still type your questions below.');
+    return;
+  }}
+  showErr('');
+  if(isSpeaking){{ window.speechSynthesis.cancel(); isSpeaking=false; }}
 
-// ─── Text send ────────────────────────────────────────────
+  recog=new SR();
+  recog.lang=currentLang;
+  recog.interimResults=true;          // live transcript as you speak
+  recog.continuous=continuousMode;     // continuous if toggled
+  recog.maxAlternatives=3;
+
+  recog.onstart=()=>{{
+    isListening=true;
+    setState('listening','🎙️ Listening — speak now...');
+    provider.textContent='🔴 Google Mic Active · '+langMap[currentLang];
+  }};
+
+  recog.onresult=e=>{{
+    let interim=''; let finalText='';
+    for(let i=e.resultIndex;i<e.results.length;i++){{
+      if(e.results[i].isFinal){{
+        finalText+=e.results[i][0].transcript;
+        // show confidence
+        const conf=Math.round(e.results[i][0].confidence*100);
+        if(conf>0){{
+          confBadge.style.display='block';
+          confBadge.textContent='Accuracy: '+conf+'%';
+          setTimeout(()=>confBadge.style.display='none',2500);
+        }}
+      }} else {{
+        interim+=e.results[i][0].transcript;
+      }}
+    }}
+    interimEl.textContent=interim;
+    if(finalText){{
+      interimEl.textContent='';
+      if(!continuousMode)stopListen();
+      handleQ(finalText.trim());
+    }}
+  }};
+
+  recog.onerror=e=>{{
+    stopListen();
+    const msgs={{
+      'not-allowed':'Microphone access denied. Please allow mic permission and try again.',
+      'no-speech':'No speech detected. Please speak louder or check your microphone.',
+      'network':'Network error. Please check your internet connection.',
+      'aborted':'Recognition stopped.',
+      'audio-capture':'No microphone found. Please connect a microphone.',
+      'service-not-allowed':'Speech service not available on this device/browser.'
+    }};
+    if(e.error!=='aborted') showErr('🎙️ '+(msgs[e.error]||'Error: '+e.error));
+    setState('','Try again or type your question below');
+    provider.textContent='🟢 Google Speech · '+langMap[currentLang];
+  }};
+
+  recog.onend=()=>{{
+    isListening=false;
+    provider.textContent='🟢 Google Speech · '+langMap[currentLang];
+    if(continuousMode && !isSpeaking){{
+      // auto-restart for continuous mode
+      setTimeout(()=>{{ if(continuousMode) startListen(); }},400);
+    }} else {{
+      setState('','Tap to speak again');
+    }}
+  }};
+
+  try{{ recog.start(); }}
+  catch(err){{
+    showErr('Could not start microphone: '+err.message);
+    setState('','Tap to try again');
+  }}
+}}
+
+function stopListen(){{
+  if(recog){{try{{recog.stop();}}catch(e){{}} recog=null;}}
+  isListening=false;
+}}
+
+// ═══════════════════════════════════════════════════
+//  TEXT INPUT
+// ═══════════════════════════════════════════════════
 function sendTxt(){{
-  const i=document.getElementById('txtInput'); const t=i.value.trim(); if(!t)return; i.value=''; handleQ(t);
+  const i=document.getElementById('txtInput');
+  const t=i.value.trim(); if(!t)return; i.value=''; handleQ(t);
 }}
 function ask(q){{ handleQ(q); }}
-function updateLang(){{}}
 
-// ─── Add chat bubble ─────────────────────────────────────
+// ═══════════════════════════════════════════════════
+//  CHAT BUBBLES
+// ═══════════════════════════════════════════════════
 function addMsg(role,text){{
   const d=document.createElement('div');
   d.className=role==='user'?'msg-u':'msg-a';
   const l=document.createElement('div'); l.className='ml';
   l.textContent=role==='user'?'You':'🤖 Alex';
-  d.appendChild(l); d.appendChild(document.createTextNode(text));
-  chatBox.appendChild(d); chatBox.scrollTop=chatBox.scrollHeight;
+  d.appendChild(l);
+  d.appendChild(document.createTextNode(text));
+  if(role==='alex'){{
+    const acts=document.createElement('div'); acts.className='msg-actions';
+    const rb=document.createElement('button'); rb.className='replay-btn';
+    rb.textContent='🔊 Replay'; rb.onclick=()=>speakOut(text);
+    acts.appendChild(rb); d.appendChild(acts);
+  }}
+  chatBox.appendChild(d);
+  chatBox.scrollTop=chatBox.scrollHeight;
 }}
 
-// ─── Main query ───────────────────────────────────────────
+// ═══════════════════════════════════════════════════
+//  MAIN QUERY HANDLER
+// ═══════════════════════════════════════════════════
 async function handleQ(q){{
   addMsg('user',q);
-  setState('thinking','Alex is thinking...');
-  
+  setState('thinking','🧠 Alex is thinking...');
+  chatHistory.push({{role:'user',content:q}});
+
   const key=document.getElementById('apiKey').value.trim();
   let reply='';
-  
+
   if(key){{
     try{{
-      const lang=langMap[document.getElementById('langSel').value]||'English';
+      const lang=langMap[currentLang]||'English';
+      const msgs=chatHistory.slice(-8); // keep last 8 turns for context
       const r=await fetch('https://api.anthropic.com/v1/messages',{{
         method:'POST',
         headers:{{
@@ -633,73 +868,126 @@ async function handleQ(q){{
         }},
         body:JSON.stringify({{
           model:'claude-sonnet-4-20250514',
-          max_tokens:300,
-          system:`You are Alex, a friendly and warm AI cardiac health assistant. Respond in ${{lang}} language. Be concise (under 3 sentences for voice), caring, and medically accurate. Gently recommend seeing a cardiologist for any serious concerns.`,
-          messages:[{{role:'user',content:q}}]
+          max_tokens:400,
+          system:`You are Alex, a warm and expert AI cardiac health assistant built into the CardioAI app. 
+Respond ONLY in ${{lang}} language — this is critical for voice output.
+Keep answers concise (2-3 sentences max) because they will be spoken aloud.
+Be empathetic, medically accurate, and always recommend consulting a cardiologist for serious concerns.
+Never use markdown, bullet points, or special characters — plain prose only for clean TTS.`,
+          messages:msgs
         }})
       }});
+      if(!r.ok){{
+        const err=await r.json();
+        throw new Error(err.error?.message||'API error '+r.status);
+      }}
       const data=await r.json();
       reply=data.content?.[0]?.text||fallback(q);
-    }}catch{{reply=fallback(q);}}
+      chatHistory.push({{role:'assistant',content:reply}});
+    }}catch(err){{
+      showErr('AI error: '+err.message+' — using built-in response.');
+      reply=fallback(q);
+    }}
   }} else {{
-    await new Promise(r=>setTimeout(r,700));
+    await new Promise(r=>setTimeout(r,600));
     reply=fallback(q);
+    chatHistory.push({{role:'assistant',content:reply}});
   }}
-  
+
   addMsg('alex',reply);
   speakOut(reply);
 }}
 
-// ─── Rule-based fallback ──────────────────────────────────
+// ═══════════════════════════════════════════════════
+//  RULE-BASED FALLBACK RESPONSES
+// ═══════════════════════════════════════════════════
 function fallback(q){{
   q=q.toLowerCase();
-  if(q.match(/symptom|sign|feel|ache|chest pain/))
-    return"Common heart disease symptoms: chest pain or tightness, shortness of breath, fatigue, palpitations, dizziness, and swelling in legs. Please see a cardiologist if you experience these.";
-  if(q.match(/cholesterol|diet|food|eat/))
-    return"To lower cholesterol: eat oats, nuts, and omega-3 fatty acids; avoid trans fats and red meat. Regular exercise and not smoking also help significantly.";
-  if(q.match(/blood pressure|bp|hypertension/))
-    return"Normal BP is below 120/80 mmHg. Reduce salt, exercise daily, avoid smoking, manage stress, and take prescribed medications to control high blood pressure.";
-  if(q.match(/ecg|electrocardiogram|heart rate|ekg/))
-    return"An ECG records the heart's electrical activity. ST-T wave changes may indicate ischemia. Always have your ECG interpreted by a cardiologist for accurate diagnosis.";
-  if(q.match(/exercise|workout|physical|sport/))
-    return"30 minutes of moderate aerobic exercise 5 days a week is great for heart health. Start gradually. If you have an existing condition, consult your doctor first.";
-  if(q.match(/stress|anxiet|mental|relax/))
-    return"Chronic stress raises cortisol, increasing BP and heart disease risk. Try deep breathing, meditation, regular sleep, and talking to a counselor if stress is severe.";
-  if(q.match(/smok|tobacco|cigarette/))
-    return"Smoking doubles heart disease risk. Even light smoking is harmful. Quitting significantly reduces risk within just one year. Ask your doctor about cessation aids.";
-  if(q.match(/hospital|emergency|ambulance|112/))
-    return"For cardiac emergencies in India, call 112 immediately. You can also find nearby cardiac hospitals in the Hospitals Near Me section of this app.";
-  if(q.match(/doctor|consult|when.*see/))
-    return"See a cardiologist if you have: chest pain, shortness of breath at rest, palpitations, family history of heart disease, or if your prediction score is above 60%.";
-  if(q.match(/tips?|health|prevent|protect/))
-    return"Top heart health tips: exercise regularly, eat a heart-healthy diet, quit smoking, limit alcohol, manage stress, control BP & cholesterol, and get regular check-ups.";
-  return"Hello! I'm Alex, your AI cardiac health assistant. Ask me about heart disease symptoms, cholesterol, blood pressure, medications, or anything heart-related. I'm here to help!";
+  if(q.match(/symptom|sign|feel|ache|chest.?pain|tightness/))
+    return "Common heart disease symptoms include chest pain or tightness, shortness of breath, fatigue, palpitations, dizziness, and leg swelling. Please see a cardiologist promptly if you experience any of these.";
+  if(q.match(/cholesterol|ldl|hdl|triglyceride/))
+    return "To lower cholesterol, eat oats, nuts, and omega-3 rich fish. Avoid trans fats and processed foods. Regular aerobic exercise and quitting smoking also help significantly.";
+  if(q.match(/blood.?pressure|bp|hypertension|systolic|diastolic/))
+    return "Normal blood pressure is below 120 over 80. Reduce salt intake, exercise daily, avoid smoking, manage stress, and take medications as prescribed to control high blood pressure.";
+  if(q.match(/food|diet|eat|nutrition|avoid/))
+    return "Heart-healthy foods include vegetables, fruits, whole grains, fish, and nuts. Limit red meat, processed foods, salt, and sugary drinks. A Mediterranean diet is highly recommended.";
+  if(q.match(/ecg|electrocardiogram|ekg|heart.?rate|rhythm/))
+    return "An ECG records your heart's electrical activity. Abnormal ST-T wave changes may indicate reduced blood flow. Always have your ECG results interpreted by a qualified cardiologist.";
+  if(q.match(/exercise|workout|physical|run|walk|sport/))
+    return "Aim for 30 minutes of moderate aerobic exercise at least 5 days a week. Walking, swimming, and cycling are excellent for heart health. Consult your doctor before starting if you have a heart condition.";
+  if(q.match(/stress|anxiet|mental|worry|relax|meditat/))
+    return "Chronic stress raises cortisol and blood pressure, increasing heart disease risk. Try deep breathing exercises, meditation, adequate sleep, and yoga. Consider speaking to a counselor if stress is severe.";
+  if(q.match(/smok|tobacco|cigarette|vap/))
+    return "Smoking significantly doubles the risk of heart disease. Quitting reduces your risk within just one year. Ask your doctor about nicotine replacement therapy or prescription cessation medications.";
+  if(q.match(/hospital|emergency|ambulance|911|112|urgent/))
+    return "For cardiac emergencies in India, call 112 immediately. Do not drive yourself to the hospital. Our Hospitals Near Me section lists cardiac centres near you with direct contact numbers.";
+  if(q.match(/doctor|cardiologist|consult|specialist|appointment/))
+    return "See a cardiologist if you have chest pain, unexplained breathlessness, palpitations, a family history of heart disease, or if your CardioAI prediction shows elevated risk above 60 percent.";
+  if(q.match(/tips?|prevent|protect|health|lifestyle/))
+    return "Top heart health habits: exercise daily, eat plant-based whole foods, quit smoking, limit alcohol, sleep 7 to 8 hours, manage stress, and get annual cardiac check-ups after age 40.";
+  if(q.match(/diabetes|sugar|insulin|glucose/))
+    return "Diabetes significantly raises heart disease risk. Keep blood sugar controlled through diet, exercise, and medication. Regular HbA1c monitoring and cardiologist visits are essential for diabetic patients.";
+  if(q.match(/weight|obese|bmi|overweight/))
+    return "Excess weight, especially around the abdomen, increases heart disease risk. Even a 5 to 10 percent weight reduction can meaningfully improve blood pressure and cholesterol levels.";
+  if(q.match(/alcohol|drink|wine|beer/))
+    return "Excessive alcohol intake raises blood pressure and can cause irregular heart rhythms. Limit alcohol to no more than one drink per day for women and two for men, or avoid it entirely.";
+  if(q.match(/medic|drug|aspirin|statin|pill|tablet/))
+    return "Never stop heart medications without consulting your doctor. Statins reduce cholesterol, and aspirin can prevent clots in high-risk patients. Always follow your cardiologist's prescription exactly.";
+  return "Hello! I am Alex, your AI cardiac health assistant. I can answer questions about heart symptoms, diet, medications, blood pressure, cholesterol, and more. How can I help you today?";
 }}
 
-// ─── Speech synthesis ─────────────────────────────────────
+// ═══════════════════════════════════════════════════
+//  GOOGLE TTS (Web Speech Synthesis)
+// ═══════════════════════════════════════════════════
 function speakOut(text){{
-  if(!window.speechSynthesis){{ setState('','Done'); return; }}
-  setState('speaking','Alex is speaking...');
+  if(!window.speechSynthesis){{ setState('','Ready'); return; }}
+  window.speechSynthesis.cancel();
+  isSpeaking=true;
+  setState('speaking','🔊 Alex is speaking...');
   const u=new SpeechSynthesisUtterance(text);
-  u.lang=document.getElementById('langSel').value;
-  u.rate=.95; u.pitch=1.1;
-  const voices=speechSynthesis.getVoices();
-  const lc=u.lang.split('-')[0];
-  const v=voices.find(v=>v.lang.startsWith(lc)&&/female|woman|samantha|google/i.test(v.name))
-        ||voices.find(v=>v.lang.startsWith(lc))
-        ||null;
-  if(v)u.voice=v;
-  u.onend=()=>setState('','Ask another question...');
-  u.onerror=()=>setState('','');
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
+  u.lang=currentLang;
+  u.rate=0.93; u.pitch=1.08; u.volume=1.0;
+
+  // Prefer Google TTS voice for the language
+  function pickVoice(){{
+    const voices=window.speechSynthesis.getVoices();
+    const lc=currentLang.split('-')[0];
+    // Priority: Google + language match > any language match > default
+    return voices.find(v=>v.lang.startsWith(lc)&&/google/i.test(v.name))
+        || voices.find(v=>v.lang.startsWith(lc)&&/female|samantha|zira|hazel/i.test(v.name))
+        || voices.find(v=>v.lang.startsWith(lc))
+        || null;
+  }}
+
+  const v=pickVoice();
+  if(v) u.voice=v;
+
+  u.onend=()=>{{
+    isSpeaking=false;
+    setState('','Ready — tap to speak again');
+    if(continuousMode) setTimeout(startListen,500);
+  }};
+  u.onerror=()=>{{ isSpeaking=false; setState('','Ready'); }};
+  window.speechSynthesis.speak(u);
 }}
 
-window.speechSynthesis?.addEventListener?.('voiceschanged',()=>{{}});
+// Voices load asynchronously on Chrome
+if(window.speechSynthesis){{
+  window.speechSynthesis.onvoiceschanged=()=>{{}};
+}}
+
+// ═══════════════════════════════════════════════════
+//  GREET ON LOAD
+// ═══════════════════════════════════════════════════
+setTimeout(()=>{{
+  const greet=langGreetings[currentLang]||langGreetings['en-US'];
+  addMsg('alex',greet);
+  speakOut(greet);
+}},800);
 </script>
 </body>
 </html>"""
-    components.html(html, height=height, scrolling=False)
+    components.html(html, height=height, scrolling=True)
 
 
 # ═════════════════════════════════════════════════════════════
@@ -945,22 +1233,22 @@ def page_prediction():
 #  PAGE: ALEX VOICE ASSISTANT
 # ═════════════════════════════════════════════════════════════
 def page_voice():
-    st.markdown('<div class="ptitle">🎙️ Alex – AI Voice Assistant</div>', unsafe_allow_html=True)
-    st.markdown('<div class="psub">Siri-like voice AI for cardiac health — speak, listen, and get answers in 6 languages</div>', unsafe_allow_html=True)
+    st.markdown('<div class="ptitle">🎙️ Alex \u2013 Google Voice AI Assistant</div>', unsafe_allow_html=True)
+    st.markdown('<div class="psub">Live Google Speech Recognition \u00b7 8 Languages \u00b7 Mobile Friendly \u00b7 Claude AI Powered</div>', unsafe_allow_html=True)
 
     lang_bcp = {"en":"en-US","hi":"hi-IN","kn":"kn-IN","ta":"ta-IN","te":"te-IN","ml":"ml-IN"}.get(st.session_state.language,"en-US")
-    api_key  = st.sidebar.text_input("🔑 Anthropic API Key (for live AI)", type="password", help="Enter your Anthropic key. Without it, Alex uses built-in responses.")
+    api_key  = st.sidebar.text_input("\U0001f511 Anthropic API Key (for live AI)", type="password", help="Enter your Anthropic key for live Claude AI answers. Without it, Alex uses smart built-in responses.")
 
-    st.markdown("""
-<div style="background:rgba(123,47,247,.12);border:1px solid rgba(123,47,247,.3);
-border-radius:14px;padding:12px 18px;font-size:13px;color:rgba(200,200,240,.8);margin-bottom:16px;">
-💡 <b>How to use Alex:</b> Click the glowing orb OR tap 🎤 to speak.
-Your browser will ask for microphone permission — allow it.
-Alex will reply in voice using your selected language.
-Add your Anthropic API key (sidebar) for live AI answers.
-</div>""", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+    col1.markdown("""<div style="background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.25);border-radius:12px;padding:10px 14px;font-size:12px;color:rgba(0,230,118,.9);">
+\U0001f3a4 <b>Tap orb or mic button</b><br><span style="color:rgba(200,200,230,.5);">Allow microphone when prompted</span></div>""", unsafe_allow_html=True)
+    col2.markdown("""<div style="background:rgba(123,47,247,.08);border:1px solid rgba(123,47,247,.25);border-radius:12px;padding:10px 14px;font-size:12px;color:rgba(200,150,255,.9);">
+\U0001f310 <b>8 Languages supported</b><br><span style="color:rgba(200,200,230,.5);">Tap any flag to switch language</span></div>""", unsafe_allow_html=True)
+    col3.markdown("""<div style="background:rgba(232,41,76,.08);border:1px solid rgba(232,41,76,.25);border-radius:12px;padding:10px 14px;font-size:12px;color:rgba(255,150,150,.9);">
+\U0001f4f1 <b>Works on mobile too</b><br><span style="color:rgba(200,200,230,.5);">Chrome/Edge \u00b7 Safari on iOS</span></div>""", unsafe_allow_html=True)
 
-    alex_siri_component(height=720, api_key=api_key, lang_bcp=lang_bcp)
+    st.markdown("<br>", unsafe_allow_html=True)
+    alex_siri_component(height=860, api_key=api_key, lang_bcp=lang_bcp)
 
 
 # ═════════════════════════════════════════════════════════════
@@ -1178,7 +1466,8 @@ border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;">
 padding:12px;font-size:11px;color:rgba(200,200,230,.3);line-height:1.8;">
 <b style="color:rgba(200,200,230,.5);">Install packages:</b><br>
 pip install streamlit numpy joblib<br>
-pandas folium streamlit-folium gtts
+pandas folium streamlit-folium gtts<br>
+<b style="color:rgba(0,230,118,.4);">Voice: Chrome/Edge desktop<br>Safari on iOS (mobile)</b>
 </div>""", unsafe_allow_html=True)
 
 
