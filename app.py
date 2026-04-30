@@ -74,7 +74,7 @@ LANG = {
 }
 
 # ── Session State ─────────────────────────────────────────────
-for k,v in {"logged_in":False,"username":"","page":"login","language":"en","pred_result":None}.items():
+for k,v in {"logged_in":False,"username":"","page":"login","language":"en","pred_result":None,"terms_lang":"en-US"}.items():
     if k not in st.session_state: st.session_state[k] = v
 
 def T(key): return LANG[st.session_state.language].get(key, LANG["en"].get(key, key))
@@ -89,7 +89,7 @@ model = load_model()
 # ═════════════════════════════════════════════════════════════
 #  YOUTUBE VIDEO BACKGROUND
 # ═════════════════════════════════════════════════════════════
-def inject_video_background(video_id="6nKYfealjBg"):
+def inject_video_background(video_id="A8hMBdwGnxM"):
     st.markdown(f"""
 <style>
 /* ── Make app transparent so video shows through ── */
@@ -313,76 +313,44 @@ p { color: rgba(210,210,240,0.85) !important; }
 
 
 # ═════════════════════════════════════════════════════════════
-#  GOOGLE VOICE ASSISTANT COMPONENT  (Live STT + TTS + AI + Mobile)
+#  SIRI-LIKE ALEX COMPONENT  (full-featured voice AI in browser)
 # ═════════════════════════════════════════════════════════════
-def alex_siri_component(height=820, api_key="", lang_bcp="en-US"):
+def alex_siri_component(height=760, api_key="", lang_bcp="en-US"):
     html = f"""<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
-*{{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}}
-html,body{{
-  background:transparent;font-family:'Outfit',sans-serif;color:white;
-  overflow-x:hidden;height:100%;
-  /* Mobile safe area */
-  padding-bottom:env(safe-area-inset-bottom);
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;700&family=Outfit:wght@300;400;600;700&display=swap');
+*{{margin:0;padding:0;box-sizing:border-box;}}
+body{{
+  background:transparent;
+  font-family:'Outfit',sans-serif;
+  color:white;
+  min-height:100vh;
+  overflow-x:hidden;
 }}
 
 /* ── Root layout ── */
 .wrap{{
-  display:flex;flex-direction:column;align-items:center;
-  padding:14px 12px 20px;gap:14px;max-width:600px;margin:0 auto;
-  width:100%;
+  display:flex; flex-direction:column; align-items:center;
+  padding:20px 16px 30px; gap:18px; max-width:580px; margin:0 auto;
 }}
 
-/* ── Header ── */
+/* ── Alex title ── */
 .alex-title{{
-  font-size:clamp(22px,5vw,30px);font-weight:700;letter-spacing:4px;
-  background:linear-gradient(90deg,#c84b9e,#7b2ff7,#e8294c,#ff6b35);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  font-size:30px; font-weight:700; letter-spacing:4px;
+  background: linear-gradient(90deg,#c84b9e,#7b2ff7,#e8294c,#ff6b35);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
 }}
-.alex-sub{{font-size:clamp(9px,2vw,11px);color:rgba(255,255,255,.4);letter-spacing:3px;margin-top:-8px;}}
-
-/* ── Lang + Mode bar ── */
-.top-bar{{display:flex;gap:8px;width:100%;flex-wrap:wrap;}}
-.lang-grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:100%;}}
-.lang-btn{{
-  background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.12);
-  border-radius:10px;color:rgba(255,255,255,.7);padding:7px 4px;font-size:11px;
-  cursor:pointer;transition:all .2s;text-align:center;font-family:'Outfit',sans-serif;
-  -webkit-user-select:none;user-select:none;
-}}
-.lang-btn:active{{transform:scale(.94);}}
-.lang-btn.active{{
-  background:linear-gradient(135deg,rgba(200,75,158,.4),rgba(123,47,247,.4));
-  border-color:rgba(200,75,158,.7);color:white;font-weight:600;
-  box-shadow:0 0 12px rgba(200,75,158,.3);
-}}
-
-/* ── API key ── */
-.key-row{{display:flex;gap:8px;width:100%;align-items:center;}}
-.key-inp{{
-  flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
-  border-radius:12px;color:white;padding:10px 14px;font-size:13px;outline:none;
-  font-family:'Outfit',sans-serif;min-width:0;
-}}
-.key-inp::placeholder{{color:rgba(255,255,255,.22);}}
-.key-inp:focus{{border-color:rgba(123,47,247,.6);}}
-.save-btn{{
-  background:linear-gradient(135deg,#7b2ff7,#e8294c);border:none;
-  color:white;padding:10px 14px;border-radius:12px;cursor:pointer;
-  font-size:12px;font-weight:600;white-space:nowrap;
-}}
+.alex-sub{{font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:3px;margin-top:-10px;}}
 
 /* ── Orb ── */
-.orb-wrap{{position:relative;width:clamp(160px,40vw,200px);height:clamp(160px,40vw,200px);cursor:pointer;user-select:none;flex-shrink:0;}}
+.orb-wrap{{position:relative;width:210px;height:210px;cursor:pointer;user-select:none;}}
 .orb-ring{{
-  position:absolute;border-radius:50%;
-  border:1.5px solid rgba(200,75,158,.35);
-  width:100%;height:100%;top:0;left:0;
+  position:absolute; border-radius:50%;
+  border:1.5px solid rgba(200,75,158,0.35);
+  width:210px;height:210px; top:0;left:0;
   animation:ringOut 2.5s ease-out infinite;
 }}
 .orb-ring:nth-child(2){{animation-delay:.85s;}}
@@ -390,180 +358,168 @@ html,body{{
 @keyframes ringOut{{0%{{transform:scale(1);opacity:.9;}}100%{{transform:scale(1.9);opacity:0;}}}}
 
 .orb{{
-  position:absolute;top:8%;left:8%;
-  width:84%;height:84%;border-radius:50%;
-  background:radial-gradient(circle at 33% 30%,#c84b9e 0%,#7b2ff7 40%,#e8294c 75%,#ff6b35 100%);
-  box-shadow:0 0 50px rgba(200,75,158,.7),0 0 100px rgba(123,47,247,.4),inset 0 0 40px rgba(255,255,255,.07);
+  position:absolute; top:15px;left:15px;
+  width:180px;height:180px; border-radius:50%;
+  background: radial-gradient(circle at 33% 30%, #c84b9e 0%, #7b2ff7 40%, #e8294c 75%, #ff6b35 100%);
+  box-shadow: 0 0 50px rgba(200,75,158,.7), 0 0 100px rgba(123,47,247,.4), inset 0 0 50px rgba(255,255,255,.07);
   animation:orbHover 3.5s ease-in-out infinite;
-  transition:background .6s;
-  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  transition: background .6s;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
 }}
-.orb::after{{content:'';position:absolute;top:18%;left:18%;width:32%;height:28%;
-  background:radial-gradient(circle,rgba(255,255,255,.45),transparent);border-radius:50%;pointer-events:none;}}
+.orb::after{{
+  content:''; position:absolute;top:18%;left:18%;
+  width:32%;height:28%;
+  background:radial-gradient(circle,rgba(255,255,255,.45),transparent);
+  border-radius:50%;
+  pointer-events:none;
+}}
 @keyframes orbHover{{
-  0%,100%{{transform:translateY(0) scale(1);box-shadow:0 0 50px rgba(200,75,158,.7),0 0 100px rgba(123,47,247,.4);}}
-  50%{{transform:translateY(-10px) scale(1.025);box-shadow:0 18px 70px rgba(200,75,158,.9),0 0 140px rgba(123,47,247,.5);}}
+  0%,100%{{transform:translateY(0) scale(1); box-shadow:0 0 50px rgba(200,75,158,.7),0 0 100px rgba(123,47,247,.4);}}
+  50%{{transform:translateY(-12px) scale(1.025); box-shadow:0 18px 70px rgba(200,75,158,.9),0 0 140px rgba(123,47,247,.5);}}
 }}
-.orb.listening{{background:radial-gradient(circle at 33% 30%,#ff6644,#e8294c 40%,#ff0080 100%)!important;animation:orbPulse .65s ease-in-out infinite!important;}}
-.orb.thinking{{background:radial-gradient(circle at 33% 30%,#ffd740,#ff6d00 40%,#ff1744 100%)!important;animation:orbSpin 1.2s linear infinite!important;}}
-.orb.speaking{{background:radial-gradient(circle at 33% 30%,#69f0ae,#00bcd4 40%,#3d5afe 100%)!important;animation:orbPulse .4s ease-in-out infinite!important;}}
+.orb.listening{{
+  background: radial-gradient(circle at 33% 30%,#ff6644,#e8294c 40%,#ff0080 100%) !important;
+  animation:orbPulse .7s ease-in-out infinite !important;
+}}
+.orb.thinking{{
+  background: radial-gradient(circle at 33% 30%,#ffd740,#ff6d00 40%,#ff1744 100%) !important;
+  animation:orbSpin 1.2s linear infinite !important;
+}}
+.orb.speaking{{
+  background: radial-gradient(circle at 33% 30%,#69f0ae,#00bcd4 40%,#3d5afe 100%) !important;
+  animation:orbPulse .45s ease-in-out infinite !important;
+}}
 @keyframes orbPulse{{0%,100%{{transform:scale(1);}}50%{{transform:scale(1.08);}}}}
 @keyframes orbSpin{{from{{filter:hue-rotate(0deg);}}to{{filter:hue-rotate(360deg);}}}}
 
-.orb-wave{{display:flex;align-items:center;gap:4px;opacity:0;transition:opacity .35s;}}
+/* Waveform inside orb (shows when active) */
+.orb-wave{{display:flex;align-items:center;gap:5px;opacity:0;transition:opacity .35s;}}
 .orb.listening .orb-wave,.orb.speaking .orb-wave{{opacity:1;}}
 .owb{{width:4px;border-radius:4px;background:rgba(255,255,255,.9);animation:wvBar .5s ease-in-out infinite alternate;}}
-.owb:nth-child(1){{height:8px;animation-delay:0s;}}
-.owb:nth-child(2){{height:18px;animation-delay:.07s;}}
-.owb:nth-child(3){{height:30px;animation-delay:.14s;}}
-.owb:nth-child(4){{height:42px;animation-delay:.1s;}}
-.owb:nth-child(5){{height:30px;animation-delay:.05s;}}
-.owb:nth-child(6){{height:18px;animation-delay:.12s;}}
-.owb:nth-child(7){{height:8px;animation-delay:.18s;}}
+.owb:nth-child(1){{height:10px;animation-delay:0s;}}
+.owb:nth-child(2){{height:22px;animation-delay:.07s;}}
+.owb:nth-child(3){{height:34px;animation-delay:.14s;}}
+.owb:nth-child(4){{height:46px;animation-delay:.1s;}}
+.owb:nth-child(5){{height:34px;animation-delay:.05s;}}
+.owb:nth-child(6){{height:22px;animation-delay:.12s;}}
+.owb:nth-child(7){{height:10px;animation-delay:.18s;}}
 @keyframes wvBar{{from{{transform:scaleY(.3);}}to{{transform:scaleY(1);}}}}
 
-/* ── Status ── */
-.status-row{{display:flex;flex-direction:column;align-items:center;gap:4px;}}
-.status{{font-size:clamp(11px,2.5vw,14px);color:rgba(255,255,255,.6);letter-spacing:1.5px;min-height:20px;text-align:center;}}
-.interim{{font-size:12px;color:rgba(200,150,255,.8);min-height:16px;font-style:italic;}}
-.confidence-badge{{font-size:10px;color:rgba(0,230,118,.8);display:none;}}
+/* Status */
+.status{{font-size:14px;color:rgba(255,255,255,.6);letter-spacing:1.5px;min-height:22px;}}
 
-/* ── Waveform ── */
-.wave-strip{{display:flex;align-items:center;gap:2px;height:36px;opacity:0;transition:opacity .3s;}}
+/* Bottom waveform strip */
+.wave-strip{{display:flex;align-items:center;gap:3px;height:44px;opacity:0;transition:opacity .3s;}}
 .wave-strip.on{{opacity:1;}}
 .wsb{{width:3px;border-radius:3px;background:linear-gradient(180deg,#c84b9e,#7b2ff7);animation:wsAnim .5s ease-in-out infinite alternate;}}
-@keyframes wsAnim{{from{{height:3px;opacity:.35;}}to{{height:30px;opacity:1;}}}}
+@keyframes wsAnim{{from{{height:3px;opacity:.35;}}to{{height:36px;opacity:1;}}}}
 
-/* ── Chips ── */
-.chips{{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;width:100%;}}
-.chip{{
-  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);
-  border-radius:100px;padding:6px 13px;font-size:clamp(10px,2vw,12px);cursor:pointer;
-  transition:all .2s;color:rgba(255,255,255,.75);-webkit-user-select:none;user-select:none;
+/* ── Controls ── */
+.controls{{display:flex;gap:12px;align-items:center;}}
+.mic-btn{{
+  width:60px;height:60px;border-radius:50%;
+  background:linear-gradient(135deg,#e8294c,#aa1030);
+  border:none;color:white;font-size:24px;cursor:pointer;
+  box-shadow:0 4px 22px rgba(232,41,76,.55);
+  transition:all .25s; display:flex;align-items:center;justify-content:center;
 }}
-.chip:active{{transform:scale(.93);}}
-.chip:hover{{background:rgba(200,75,158,.25);border-color:rgba(200,75,158,.5);color:white;}}
+.mic-btn:hover{{transform:scale(1.12);box-shadow:0 8px 34px rgba(232,41,76,.75);}}
+.mic-btn.on{{background:linear-gradient(135deg,#ff4444,#cc0000)!important;animation:micPulse 1s infinite;}}
+@keyframes micPulse{{0%,100%{{box-shadow:0 4px 22px rgba(255,68,68,.5);}}50%{{box-shadow:0 4px 44px rgba(255,68,68,.9),0 0 0 12px rgba(255,68,68,.15);}}}}
+
+/* ── Settings row ── */
+.settings-row{{display:flex;gap:10px;width:100%;}}
+.sel{{
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);
+  border-radius:11px;color:white;padding:9px 14px;font-size:13px;cursor:pointer;flex-shrink:0;
+}}
+.key-inp{{
+  flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);
+  border-radius:11px;color:white;padding:9px 14px;font-size:13px;outline:none;
+}}
+.key-inp:focus{{border-color:rgba(123,47,247,.6);}}
+.key-inp::placeholder{{color:rgba(255,255,255,.25);}}
 
 /* ── Chat ── */
-.chat-box{{
-  width:100%;max-height:220px;overflow-y:auto;
-  display:flex;flex-direction:column;gap:9px;padding:4px 2px;
-  -webkit-overflow-scrolling:touch;
-}}
+.chat-box{{width:100%;max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 2px;}}
 .msg-u{{
   background:linear-gradient(135deg,rgba(232,41,76,.75),rgba(170,16,48,.75));
-  backdrop-filter:blur(10px);padding:9px 14px;
-  border-radius:18px 18px 4px 18px;
-  align-self:flex-end;max-width:85%;font-size:clamp(12px,2.5vw,13.5px);line-height:1.5;
+  backdrop-filter:blur(10px);
+  padding:10px 16px;border-radius:18px 18px 4px 18px;
+  align-self:flex-end;max-width:82%;font-size:13.5px;line-height:1.5;
 }}
 .msg-a{{
-  background:rgba(123,47,247,.22);border:1px solid rgba(123,47,247,.28);
-  backdrop-filter:blur(10px);padding:9px 14px;
-  border-radius:18px 18px 18px 4px;
-  align-self:flex-start;max-width:88%;font-size:clamp(12px,2.5vw,13.5px);line-height:1.5;
+  background:rgba(123,47,247,.22);border:1px solid rgba(123,47,247,.3);
+  backdrop-filter:blur(10px);
+  padding:10px 16px;border-radius:18px 18px 18px 4px;
+  align-self:flex-start;max-width:85%;font-size:13.5px;line-height:1.5;
 }}
 .ml{{font-size:10px;opacity:.5;margin-bottom:3px;}}
-.msg-actions{{display:flex;gap:6px;margin-top:6px;}}
-.replay-btn{{
-  background:rgba(255,255,255,.1);border:none;color:white;
-  font-size:11px;padding:3px 10px;border-radius:100px;cursor:pointer;
-}}
 ::-webkit-scrollbar{{width:3px;}}
 ::-webkit-scrollbar-thumb{{background:rgba(255,255,255,.18);border-radius:2px;}}
 
-/* ── Input row ── */
-.tinput-row{{display:flex;gap:8px;width:100%;align-items:center;}}
+/* ── Text input row ── */
+.tinput-row{{display:flex;gap:10px;width:100%;align-items:center;}}
 .tinput{{
-  flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);
-  border-radius:26px;color:white;padding:12px 18px;font-size:clamp(13px,3vw,14px);
-  outline:none;font-family:'Outfit',sans-serif;min-width:0;
-  /* Mobile font size prevents zoom */
-  font-size:16px;
+  flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);
+  border-radius:28px;color:white;padding:13px 20px;font-size:14px;outline:none;
+  font-family:'Outfit',sans-serif;
 }}
 .tinput:focus{{border-color:rgba(123,47,247,.6);}}
-.tinput::placeholder{{color:rgba(255,255,255,.25);}}
-
-.mic-fab{{
-  width:52px;height:52px;border-radius:50%;flex-shrink:0;
-  background:linear-gradient(135deg,#e8294c,#aa1030);
-  border:none;color:white;font-size:22px;cursor:pointer;
-  box-shadow:0 4px 20px rgba(232,41,76,.5);transition:all .25s;
-  display:flex;align-items:center;justify-content:center;
-  touch-action:manipulation;
-}}
-.mic-fab:active{{transform:scale(.9);}}
-.mic-fab.on{{background:linear-gradient(135deg,#ff4444,#cc0000)!important;animation:micPulse .9s infinite;}}
-@keyframes micPulse{{0%,100%{{box-shadow:0 4px 20px rgba(255,68,68,.5);}}50%{{box-shadow:0 4px 40px rgba(255,68,68,.9),0 0 0 10px rgba(255,68,68,.12);}}}}
-
-.send-fab{{
-  width:52px;height:52px;border-radius:50%;flex-shrink:0;
+.tinput::placeholder{{color:rgba(255,255,255,.28);}}
+.send-btn{{
+  width:50px;height:50px;border-radius:50%;
   background:linear-gradient(135deg,#7b2ff7,#e8294c);
-  border:none;color:white;font-size:20px;cursor:pointer;
-  transition:all .22s;display:flex;align-items:center;justify-content:center;
-  touch-action:manipulation;
+  border:none;color:white;font-size:20px;cursor:pointer;transition:all .22s;
+  display:flex;align-items:center;justify-content:center;
 }}
-.send-fab:active{{transform:scale(.9);}}
+.send-btn:hover{{transform:scale(1.12);}}
 
-/* ── Continuous mode toggle ── */
-.cont-toggle{{
-  display:flex;align-items:center;gap:8px;
-  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
-  border-radius:100px;padding:6px 14px;cursor:pointer;font-size:12px;
-  color:rgba(255,255,255,.6);transition:all .2s;width:100%;justify-content:center;
+/* ── Quick chips ── */
+.chips{{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}}
+.chip{{
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);
+  border-radius:100px;padding:6px 14px;font-size:12px;cursor:pointer;transition:all .2s;
+  color:rgba(255,255,255,.75);
 }}
-.cont-toggle.active{{background:rgba(0,230,118,.12);border-color:rgba(0,230,118,.4);color:#00e676;}}
-.toggle-dot{{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.25);transition:all .2s;}}
-.cont-toggle.active .toggle-dot{{background:#00e676;box-shadow:0 0 6px #00e676;}}
-
-/* ── Error banner ── */
-.err-banner{{
-  width:100%;background:rgba(232,41,76,.15);border:1px solid rgba(232,41,76,.4);
-  border-radius:12px;padding:10px 14px;font-size:12px;color:#ff8099;display:none;
-}}
-
-/* ── Voice provider badge ── */
-.provider-badge{{
-  font-size:10px;color:rgba(255,255,255,.3);letter-spacing:1px;
-}}
+.chip:hover{{background:rgba(200,75,158,.25);border-color:rgba(200,75,158,.5);color:white;}}
+.chip-term{{border-color:rgba(123,47,247,.35)!important;color:rgba(200,180,255,.85)!important;}}
+.chip-term:hover{{background:rgba(123,47,247,.3)!important;border-color:rgba(123,47,247,.7)!important;color:white!important;}}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <!-- Header -->
   <div class="alex-title">✦ ALEX</div>
-  <div class="alex-sub">GOOGLE VOICE AI · CARDIAC ASSISTANT</div>
-  <div class="provider-badge" id="providerBadge">🟢 Google Speech Recognition · Ready</div>
+  <div class="alex-sub">AI CARDIAC HEALTH ASSISTANT</div>
 
-  <!-- Language Grid -->
-  <div class="lang-grid" id="langGrid">
-    <div class="lang-btn {'active' if lang_bcp.startswith('en') else ''}" onclick="setLang('en-US',this)">🇬🇧<br>English</div>
-    <div class="lang-btn {'active' if lang_bcp.startswith('hi') else ''}" onclick="setLang('hi-IN',this)">🇮🇳<br>हिंदी</div>
-    <div class="lang-btn {'active' if lang_bcp.startswith('kn') else ''}" onclick="setLang('kn-IN',this)">🇮🇳<br>ಕನ್ನಡ</div>
-    <div class="lang-btn {'active' if lang_bcp.startswith('ta') else ''}" onclick="setLang('ta-IN',this)">🇮🇳<br>தமிழ்</div>
-    <div class="lang-btn {'active' if lang_bcp.startswith('te') else ''}" onclick="setLang('te-IN',this)">🇮🇳<br>తెలుగు</div>
-    <div class="lang-btn {'active' if lang_bcp.startswith('ml') else ''}" onclick="setLang('ml-IN',this)">🇮🇳<br>മലയാ</div>
-    <div class="lang-btn" onclick="setLang('fr-FR',this)">🇫🇷<br>Français</div>
-    <div class="lang-btn" onclick="setLang('de-DE',this)">🇩🇪<br>Deutsch</div>
-  </div>
-
-  <!-- API Key -->
-  <div class="key-row">
+  <!-- Settings -->
+  <div class="settings-row">
+    <select id="langSel" class="sel" onchange="updateLang()">
+      <option value="en-US" {'selected' if lang_bcp.startswith('en') else ''}>🇬🇧 English</option>
+      <option value="hi-IN" {'selected' if lang_bcp.startswith('hi') else ''}>🇮🇳 Hindi</option>
+      <option value="kn-IN" {'selected' if lang_bcp.startswith('kn') else ''}>🇮🇳 Kannada</option>
+      <option value="ta-IN" {'selected' if lang_bcp.startswith('ta') else ''}>🇮🇳 Tamil</option>
+      <option value="te-IN" {'selected' if lang_bcp.startswith('te') else ''}>🇮🇳 Telugu</option>
+      <option value="ml-IN" {'selected' if lang_bcp.startswith('ml') else ''}>🇮🇳 Malayalam</option>
+      <option value="fr-FR">🇫🇷 French</option>
+      <option value="es-ES">🇪🇸 Spanish</option>
+      <option value="ar-SA">🇸🇦 Arabic</option>
+      <option value="ja-JP">🇯🇵 Japanese</option>
+      <option value="zh-CN">🇨🇳 Chinese</option>
+    </select>
     <input id="apiKey" class="key-inp" type="password"
       value="{api_key}"
-      placeholder="🔑 Anthropic API key for live AI (optional)" />
-    <button class="save-btn" onclick="saveKey()">Save</button>
+      placeholder="Anthropic API key (optional – for live AI)" />
   </div>
 
-  <!-- Error Banner -->
-  <div class="err-banner" id="errBanner"></div>
-
   <!-- Orb -->
-  <div class="orb-wrap" id="orbWrap" onclick="handleOrbClick()" role="button" aria-label="Tap to speak">
+  <div class="orb-wrap" id="orbWrap">
     <div class="orb-ring"></div>
     <div class="orb-ring"></div>
     <div class="orb-ring"></div>
-    <div class="orb" id="alexOrb">
+    <div class="orb" id="alexOrb" onclick="handleOrbClick()">
       <div class="orb-wave">
         <div class="owb"></div><div class="owb"></div><div class="owb"></div>
         <div class="owb"></div><div class="owb"></div><div class="owb"></div>
@@ -572,292 +528,133 @@ html,body{{
     </div>
   </div>
 
-  <!-- Status -->
-  <div class="status-row">
-    <div class="status" id="statusTxt">Tap Alex or 🎤 to speak</div>
-    <div class="interim" id="interimTxt"></div>
-    <div class="confidence-badge" id="confBadge"></div>
-  </div>
+  <div class="status" id="statusTxt">Tap Alex to speak</div>
 
-  <!-- Wave Strip -->
+  <!-- Wave strip -->
   <div class="wave-strip" id="waveStrip"></div>
 
-  <!-- Continuous Mode Toggle -->
-  <div class="cont-toggle" id="contToggle" onclick="toggleContinuous()">
-    <div class="toggle-dot" id="toggleDot"></div>
-    <span id="contLabel">Continuous Listen Mode: OFF</span>
-  </div>
-
-  <!-- Quick chips -->
+  <!-- Quick chips – General -->
+  <div style="font-size:11px;color:rgba(255,255,255,.35);letter-spacing:2px;text-align:center;margin-bottom:2px;">GENERAL QUESTIONS</div>
   <div class="chips">
     <div class="chip" onclick="ask('What are heart disease symptoms?')">❤️ Symptoms</div>
-    <div class="chip" onclick="ask('How to lower my cholesterol?')">🧪 Cholesterol</div>
-    <div class="chip" onclick="ask('What is high blood pressure?')">💉 BP Info</div>
-    <div class="chip" onclick="ask('Tips for a healthy heart?')">💪 Heart Tips</div>
-    <div class="chip" onclick="ask('When should I see a cardiologist?')">👨‍⚕️ Doctor</div>
-    <div class="chip" onclick="ask('How to read my ECG report?')">📊 ECG</div>
-    <div class="chip" onclick="ask('What foods are good for the heart?')">🥑 Diet</div>
-    <div class="chip" onclick="ask('How does stress affect my heart?')">🧘 Stress</div>
+    <div class="chip" onclick="ask('How to lower cholesterol?')">🧪 Cholesterol</div>
+    <div class="chip" onclick="ask('What is high blood pressure?')">💉 Blood Pressure</div>
+    <div class="chip" onclick="ask('Tips for heart health?')">💪 Heart Tips</div>
+    <div class="chip" onclick="ask('When should I see a doctor?')">👨‍⚕️ See Doctor</div>
+    <div class="chip" onclick="ask('What does my ECG mean?')">📊 ECG</div>
   </div>
 
-  <!-- Chat box -->
+  <!-- Medical Terms chips -->
+  <div style="font-size:11px;color:rgba(255,255,255,.35);letter-spacing:2px;text-align:center;margin-top:6px;margin-bottom:2px;">📖 MEDICAL TERMS — CLICK TO HEAR EXPLANATION IN VOICE</div>
+  <div class="chips">
+    <div class="chip chip-term" onclick="ask('Explain Exercise Angina in simple terms')">🏃 Exercise Angina</div>
+    <div class="chip chip-term" onclick="ask('Explain ST Depression in an ECG')">📉 ST Depression</div>
+    <div class="chip chip-term" onclick="ask('Explain Typical Angina chest pain')">💔 Typical Angina</div>
+    <div class="chip chip-term" onclick="ask('Explain Atypical Angina chest pain')">💛 Atypical Angina</div>
+    <div class="chip chip-term" onclick="ask('Explain Non-anginal Pain in chest')">🫀 Non-anginal Pain</div>
+    <div class="chip chip-term" onclick="ask('Explain Asymptomatic heart condition')">🔕 Asymptomatic</div>
+  </div>
+  <div class="chips" style="margin-top:4px;">
+    <div class="chip chip-term" onclick="ask('What is a Normal ECG result?')">✅ Normal ECG</div>
+    <div class="chip chip-term" onclick="ask('Explain ST-T Wave Abnormality on ECG')">⚠️ ST-T Abnormality</div>
+    <div class="chip chip-term" onclick="ask('Explain LV Hypertrophy on ECG')">🫶 LV Hypertrophy</div>
+    <div class="chip chip-term" onclick="ask('Explain Upsloping ST segment')">📈 Upsloping</div>
+    <div class="chip chip-term" onclick="ask('Explain Flat ST segment')">➖ Flat ST</div>
+    <div class="chip chip-term" onclick="ask('Explain Downsloping ST segment')">📉 Downsloping</div>
+  </div>
+
+  <!-- Chat -->
   <div class="chat-box" id="chatBox"></div>
 
-  <!-- Text + Mic input -->
+  <!-- Text input + Mic -->
   <div class="tinput-row">
-    <button class="mic-fab" id="micFab" onclick="handleOrbClick()" aria-label="Microphone">🎤</button>
-    <input class="tinput" id="txtInput" placeholder="Type a question..."
-      onkeydown="if(event.key==='Enter')sendTxt()"
-      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-    <button class="send-fab" onclick="sendTxt()" aria-label="Send">➤</button>
+    <button class="mic-btn" id="micBtn" onclick="handleOrbClick()">🎤</button>
+    <input class="tinput" id="txtInput" placeholder="Or type a question here..."
+      onkeydown="if(event.key==='Enter')sendTxt()"/>
+    <button class="send-btn" onclick="sendTxt()">➤</button>
   </div>
 
-</div>
+</div><!-- /wrap -->
 
 <script>
-// ═══════════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════════
-let currentLang = '{lang_bcp}';
-let recog = null;
-let isListening = false;
-let continuousMode = false;
-let isSpeaking = false;
-let chatHistory = [];
-
-const langMap = {{
-  'en-US':'English','hi-IN':'Hindi','kn-IN':'Kannada',
-  'ta-IN':'Tamil','te-IN':'Telugu','ml-IN':'Malayalam',
-  'fr-FR':'French','de-DE':'German'
-}};
-
-const langGreetings = {{
-  'en-US':'Hello! I am Alex. How can I help you today?',
-  'hi-IN':'नमस्ते! मैं Alex हूँ। आज मैं आपकी कैसे मदद कर सकता हूँ?',
-  'kn-IN':'ನಮಸ್ಕಾರ! ನಾನು Alex. ಇಂದು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?',
-  'ta-IN':'வணக்கம்! நான் Alex. இன்று நான் உங்களுக்கு எப்படி உதவலாம்?',
-  'te-IN':'నమస్కారం! నేను Alex. ఈరోజు మీకు ఎలా సహాయపడగలను?',
-  'ml-IN':'നമസ്കാരം! ഞാൻ Alex ആണ്. ഇന്ന് ഞാൻ എങ്ങനെ സഹായിക്കാം?',
-  'fr-FR':'Bonjour! Je suis Alex. Comment puis-je vous aider?',
-  'de-DE':'Hallo! Ich bin Alex. Wie kann ich Ihnen helfen?'
-}};
-
-// ═══════════════════════════════════════════════════
-//  DOM REFS
-// ═══════════════════════════════════════════════════
-const orb       = document.getElementById('alexOrb');
-const statusEl  = document.getElementById('statusTxt');
-const interimEl = document.getElementById('interimTxt');
-const confBadge = document.getElementById('confBadge');
-const micFab    = document.getElementById('micFab');
-const chatBox   = document.getElementById('chatBox');
-const waveStrip = document.getElementById('waveStrip');
-const errBanner = document.getElementById('errBanner');
-const provider  = document.getElementById('providerBadge');
-
-// ═══════════════════════════════════════════════════
-//  BUILD WAVE STRIP
-// ═══════════════════════════════════════════════════
-for(let i=0;i<28;i++){{
+// ─── Build wave strip ─────────────────────────────────────
+const strip = document.getElementById('waveStrip');
+for(let i=0;i<32;i++){{
   const b=document.createElement('div');
   b.className='wsb';
-  b.style.animationDelay=(i*.05)+'s';
-  b.style.animationDuration=(.3+Math.random()*.35)+'s';
-  waveStrip.appendChild(b);
+  b.style.animationDelay=(i*.045)+'s';
+  b.style.animationDuration=(.28+Math.random()*.36)+'s';
+  strip.appendChild(b);
 }}
 
-// ═══════════════════════════════════════════════════
-//  STATE MACHINE
-// ═══════════════════════════════════════════════════
+const orb     = document.getElementById('alexOrb');
+const status  = document.getElementById('statusTxt');
+const micBtn  = document.getElementById('micBtn');
+const chatBox = document.getElementById('chatBox');
+
+let recog=null, isListening=false;
+const langMap={{
+  'en-US':'English','hi-IN':'Hindi','kn-IN':'Kannada',
+  'ta-IN':'Tamil','te-IN':'Telugu','ml-IN':'Malayalam',
+  'fr-FR':'French','es-ES':'Spanish','ar-SA':'Arabic',
+  'ja-JP':'Japanese','zh-CN':'Chinese'
+}};
+
+// ─── State helpers ────────────────────────────────────────
 function setState(s,txt){{
   orb.className='orb '+(s||'');
-  waveStrip.className='wave-strip'+((s==='listening'||s==='speaking')?' on':'');
-  statusEl.textContent=txt;
-  if(s!=='listening') interimEl.textContent='';
-  micFab.className='mic-fab'+(s==='listening'?' on':'');
-  micFab.textContent=s==='listening'?'⏸':s==='speaking'?'🔊':s==='thinking'?'⏳':'🎤';
+  strip.className='wave-strip'+((s==='listening'||s==='speaking')?' on':'');
+  status.textContent=txt;
+  micBtn.className='mic-btn'+(s==='listening'?' on':'');
+  micBtn.textContent=s==='listening'?'⏸':s==='speaking'?'🔊':s==='thinking'?'⏳':'🎤';
 }}
-setState('','Tap Alex or 🎤 to speak');
+setState('','Tap Alex to speak');
 
-// ═══════════════════════════════════════════════════
-//  LANGUAGE SWITCHER
-// ═══════════════════════════════════════════════════
-function setLang(bcp, btn){{
-  currentLang=bcp;
-  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  provider.textContent='🟢 Google Speech · '+langMap[bcp];
-  // stop any active recognition
-  if(recog){{ recog.stop(); recog=null; isListening=false; }}
-  setState('','Language: '+langMap[bcp]+' — Tap to speak');
-}}
-
-// ═══════════════════════════════════════════════════
-//  API KEY SAVE
-// ═══════════════════════════════════════════════════
-function saveKey(){{
-  const k=document.getElementById('apiKey').value.trim();
-  if(k){{
-    showErr('');
-    provider.textContent='🟣 Google Voice + Claude AI · '+langMap[currentLang];
-    setState('','API key saved! Tap to speak');
-  }}
-}}
-
-// ═══════════════════════════════════════════════════
-//  ERROR HELPER
-// ═══════════════════════════════════════════════════
-function showErr(msg){{
-  errBanner.style.display=msg?'block':'none';
-  errBanner.textContent=msg;
-}}
-
-// ═══════════════════════════════════════════════════
-//  CONTINUOUS MODE
-// ═══════════════════════════════════════════════════
-function toggleContinuous(){{
-  continuousMode=!continuousMode;
-  const tog=document.getElementById('contToggle');
-  const lbl=document.getElementById('contLabel');
-  tog.className='cont-toggle'+(continuousMode?' active':'');
-  document.getElementById('toggleDot').className='toggle-dot';
-  lbl.textContent='Continuous Listen Mode: '+(continuousMode?'ON':'OFF');
-  if(continuousMode) startListen();
-  else {{ if(recog){{recog.stop();recog=null;}} isListening=false; setState('','Tap to speak'); }}
-}}
-
-// ═══════════════════════════════════════════════════
-//  GOOGLE SPEECH RECOGNITION (Web Speech API)
-// ═══════════════════════════════════════════════════
+// ─── Voice input ─────────────────────────────────────────
 function handleOrbClick(){{ isListening?stopListen():startListen(); }}
 
 function startListen(){{
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){{
-    showErr('⚠️ Your browser does not support Speech Recognition. Use Chrome or Edge on desktop, or Safari on iOS. You can still type your questions below.');
-    return;
-  }}
-  showErr('');
-  if(isSpeaking){{ window.speechSynthesis.cancel(); isSpeaking=false; }}
-
+  if(!SR){{ addMsg('alex','Voice input is not supported in this browser. Please type your question instead.'); return; }}
   recog=new SR();
-  recog.lang=currentLang;
-  recog.interimResults=true;          // live transcript as you speak
-  recog.continuous=continuousMode;     // continuous if toggled
-  recog.maxAlternatives=3;
-
-  recog.onstart=()=>{{
-    isListening=true;
-    setState('listening','🎙️ Listening — speak now...');
-    provider.textContent='🔴 Google Mic Active · '+langMap[currentLang];
-  }};
-
-  recog.onresult=e=>{{
-    let interim=''; let finalText='';
-    for(let i=e.resultIndex;i<e.results.length;i++){{
-      if(e.results[i].isFinal){{
-        finalText+=e.results[i][0].transcript;
-        // show confidence
-        const conf=Math.round(e.results[i][0].confidence*100);
-        if(conf>0){{
-          confBadge.style.display='block';
-          confBadge.textContent='Accuracy: '+conf+'%';
-          setTimeout(()=>confBadge.style.display='none',2500);
-        }}
-      }} else {{
-        interim+=e.results[i][0].transcript;
-      }}
-    }}
-    interimEl.textContent=interim;
-    if(finalText){{
-      interimEl.textContent='';
-      if(!continuousMode)stopListen();
-      handleQ(finalText.trim());
-    }}
-  }};
-
-  recog.onerror=e=>{{
-    stopListen();
-    const msgs={{
-      'not-allowed':'Microphone access denied. Please allow mic permission and try again.',
-      'no-speech':'No speech detected. Please speak louder or check your microphone.',
-      'network':'Network error. Please check your internet connection.',
-      'aborted':'Recognition stopped.',
-      'audio-capture':'No microphone found. Please connect a microphone.',
-      'service-not-allowed':'Speech service not available on this device/browser.'
-    }};
-    if(e.error!=='aborted') showErr('🎙️ '+(msgs[e.error]||'Error: '+e.error));
-    setState('','Try again or type your question below');
-    provider.textContent='🟢 Google Speech · '+langMap[currentLang];
-  }};
-
-  recog.onend=()=>{{
-    isListening=false;
-    provider.textContent='🟢 Google Speech · '+langMap[currentLang];
-    if(continuousMode && !isSpeaking){{
-      // auto-restart for continuous mode
-      setTimeout(()=>{{ if(continuousMode) startListen(); }},400);
-    }} else {{
-      setState('','Tap to speak again');
-    }}
-  }};
-
-  try{{ recog.start(); }}
-  catch(err){{
-    showErr('Could not start microphone: '+err.message);
-    setState('','Tap to try again');
-  }}
+  recog.lang=document.getElementById('langSel').value;
+  recog.interimResults=false; recog.maxAlternatives=1;
+  recog.onstart=()=>{{ isListening=true; setState('listening','Listening — speak now...'); }};
+  recog.onresult=e=>{{ stopListen(); handleQ(e.results[0][0].transcript); }};
+  recog.onerror=()=>{{ stopListen(); setState('','Could not hear you — try again'); }};
+  recog.onend=()=>{{ if(isListening)stopListen(); }};
+  recog.start();
 }}
+function stopListen(){{ if(recog){{recog.stop();recog=null;}} isListening=false; }}
 
-function stopListen(){{
-  if(recog){{try{{recog.stop();}}catch(e){{}} recog=null;}}
-  isListening=false;
-}}
-
-// ═══════════════════════════════════════════════════
-//  TEXT INPUT
-// ═══════════════════════════════════════════════════
+// ─── Text send ────────────────────────────────────────────
 function sendTxt(){{
-  const i=document.getElementById('txtInput');
-  const t=i.value.trim(); if(!t)return; i.value=''; handleQ(t);
+  const i=document.getElementById('txtInput'); const t=i.value.trim(); if(!t)return; i.value=''; handleQ(t);
 }}
 function ask(q){{ handleQ(q); }}
+function updateLang(){{}}
 
-// ═══════════════════════════════════════════════════
-//  CHAT BUBBLES
-// ═══════════════════════════════════════════════════
+// ─── Add chat bubble ─────────────────────────────────────
 function addMsg(role,text){{
   const d=document.createElement('div');
   d.className=role==='user'?'msg-u':'msg-a';
   const l=document.createElement('div'); l.className='ml';
   l.textContent=role==='user'?'You':'🤖 Alex';
-  d.appendChild(l);
-  d.appendChild(document.createTextNode(text));
-  if(role==='alex'){{
-    const acts=document.createElement('div'); acts.className='msg-actions';
-    const rb=document.createElement('button'); rb.className='replay-btn';
-    rb.textContent='🔊 Replay'; rb.onclick=()=>speakOut(text);
-    acts.appendChild(rb); d.appendChild(acts);
-  }}
-  chatBox.appendChild(d);
-  chatBox.scrollTop=chatBox.scrollHeight;
+  d.appendChild(l); d.appendChild(document.createTextNode(text));
+  chatBox.appendChild(d); chatBox.scrollTop=chatBox.scrollHeight;
 }}
 
-// ═══════════════════════════════════════════════════
-//  MAIN QUERY HANDLER
-// ═══════════════════════════════════════════════════
+// ─── Main query ───────────────────────────────────────────
 async function handleQ(q){{
   addMsg('user',q);
-  setState('thinking','🧠 Alex is thinking...');
-  chatHistory.push({{role:'user',content:q}});
-
+  setState('thinking','Alex is thinking...');
+  
   const key=document.getElementById('apiKey').value.trim();
   let reply='';
-
+  const lang=langMap[document.getElementById('langSel').value]||'English';
+  
   if(key){{
     try{{
-      const lang=langMap[currentLang]||'English';
-      const msgs=chatHistory.slice(-8); // keep last 8 turns for context
       const r=await fetch('https://api.anthropic.com/v1/messages',{{
         method:'POST',
         headers:{{
@@ -868,126 +665,188 @@ async function handleQ(q){{
         }},
         body:JSON.stringify({{
           model:'claude-sonnet-4-20250514',
-          max_tokens:400,
-          system:`You are Alex, a warm and expert AI cardiac health assistant built into the CardioAI app. 
-Respond ONLY in ${{lang}} language — this is critical for voice output.
-Keep answers concise (2-3 sentences max) because they will be spoken aloud.
-Be empathetic, medically accurate, and always recommend consulting a cardiologist for serious concerns.
-Never use markdown, bullet points, or special characters — plain prose only for clean TTS.`,
-          messages:msgs
+          max_tokens:350,
+          system:`You are Alex, a warm AI cardiac health assistant for the CardioAI app. 
+Respond ONLY in ${{lang}} language (translate your entire answer including medical terms into ${{lang}}).
+Be concise (2-3 sentences for voice), caring, and medically accurate.
+For medical terminology questions (Exercise Angina, ST Depression, Typical Angina, Atypical Angina, Non-anginal Pain, Asymptomatic, ST-T Abnormality, LV Hypertrophy, Upsloping, Flat, Downsloping), give a clear patient-friendly explanation of what it means, why it matters for heart health, and what the person should do.
+Always gently recommend seeing a cardiologist for serious concerns.`,
+          messages:[{{role:'user',content:q}}]
         }})
       }});
-      if(!r.ok){{
-        const err=await r.json();
-        throw new Error(err.error?.message||'API error '+r.status);
-      }}
       const data=await r.json();
-      reply=data.content?.[0]?.text||fallback(q);
-      chatHistory.push({{role:'assistant',content:reply}});
-    }}catch(err){{
-      showErr('AI error: '+err.message+' — using built-in response.');
-      reply=fallback(q);
-    }}
+      reply=data.content?.[0]?.text||fallback(q,lang);
+    }}catch{{reply=fallback(q,lang);}}
   }} else {{
-    await new Promise(r=>setTimeout(r,600));
-    reply=fallback(q);
-    chatHistory.push({{role:'assistant',content:reply}});
+    await new Promise(r=>setTimeout(r,700));
+    reply=fallback(q,lang);
   }}
-
+  
   addMsg('alex',reply);
   speakOut(reply);
 }}
 
-// ═══════════════════════════════════════════════════
-//  RULE-BASED FALLBACK RESPONSES
-// ═══════════════════════════════════════════════════
-function fallback(q){{
+// ─── Multi-language fallback ─────────────────────────────
+function fallback(q,lang){{
   q=q.toLowerCase();
-  if(q.match(/symptom|sign|feel|ache|chest.?pain|tightness/))
-    return "Common heart disease symptoms include chest pain or tightness, shortness of breath, fatigue, palpitations, dizziness, and leg swelling. Please see a cardiologist promptly if you experience any of these.";
-  if(q.match(/cholesterol|ldl|hdl|triglyceride/))
-    return "To lower cholesterol, eat oats, nuts, and omega-3 rich fish. Avoid trans fats and processed foods. Regular aerobic exercise and quitting smoking also help significantly.";
-  if(q.match(/blood.?pressure|bp|hypertension|systolic|diastolic/))
-    return "Normal blood pressure is below 120 over 80. Reduce salt intake, exercise daily, avoid smoking, manage stress, and take medications as prescribed to control high blood pressure.";
-  if(q.match(/food|diet|eat|nutrition|avoid/))
-    return "Heart-healthy foods include vegetables, fruits, whole grains, fish, and nuts. Limit red meat, processed foods, salt, and sugary drinks. A Mediterranean diet is highly recommended.";
-  if(q.match(/ecg|electrocardiogram|ekg|heart.?rate|rhythm/))
-    return "An ECG records your heart's electrical activity. Abnormal ST-T wave changes may indicate reduced blood flow. Always have your ECG results interpreted by a qualified cardiologist.";
-  if(q.match(/exercise|workout|physical|run|walk|sport/))
-    return "Aim for 30 minutes of moderate aerobic exercise at least 5 days a week. Walking, swimming, and cycling are excellent for heart health. Consult your doctor before starting if you have a heart condition.";
-  if(q.match(/stress|anxiet|mental|worry|relax|meditat/))
-    return "Chronic stress raises cortisol and blood pressure, increasing heart disease risk. Try deep breathing exercises, meditation, adequate sleep, and yoga. Consider speaking to a counselor if stress is severe.";
-  if(q.match(/smok|tobacco|cigarette|vap/))
-    return "Smoking significantly doubles the risk of heart disease. Quitting reduces your risk within just one year. Ask your doctor about nicotine replacement therapy or prescription cessation medications.";
-  if(q.match(/hospital|emergency|ambulance|911|112|urgent/))
-    return "For cardiac emergencies in India, call 112 immediately. Do not drive yourself to the hospital. Our Hospitals Near Me section lists cardiac centres near you with direct contact numbers.";
-  if(q.match(/doctor|cardiologist|consult|specialist|appointment/))
-    return "See a cardiologist if you have chest pain, unexplained breathlessness, palpitations, a family history of heart disease, or if your CardioAI prediction shows elevated risk above 60 percent.";
-  if(q.match(/tips?|prevent|protect|health|lifestyle/))
-    return "Top heart health habits: exercise daily, eat plant-based whole foods, quit smoking, limit alcohol, sleep 7 to 8 hours, manage stress, and get annual cardiac check-ups after age 40.";
-  if(q.match(/diabetes|sugar|insulin|glucose/))
-    return "Diabetes significantly raises heart disease risk. Keep blood sugar controlled through diet, exercise, and medication. Regular HbA1c monitoring and cardiologist visits are essential for diabetic patients.";
-  if(q.match(/weight|obese|bmi|overweight/))
-    return "Excess weight, especially around the abdomen, increases heart disease risk. Even a 5 to 10 percent weight reduction can meaningfully improve blood pressure and cholesterol levels.";
-  if(q.match(/alcohol|drink|wine|beer/))
-    return "Excessive alcohol intake raises blood pressure and can cause irregular heart rhythms. Limit alcohol to no more than one drink per day for women and two for men, or avoid it entirely.";
-  if(q.match(/medic|drug|aspirin|statin|pill|tablet/))
-    return "Never stop heart medications without consulting your doctor. Statins reduce cholesterol, and aspirin can prevent clots in high-risk patients. Always follow your cardiologist's prescription exactly.";
-  return "Hello! I am Alex, your AI cardiac health assistant. I can answer questions about heart symptoms, diet, medications, blood pressure, cholesterol, and more. How can I help you today?";
-}}
+  const isHi=lang==='Hindi', isKn=lang==='Kannada', isTa=lang==='Tamil',
+        isTe=lang==='Telugu', isMl=lang==='Malayalam', isFr=lang==='French',
+        isEs=lang==='Spanish', isAr=lang==='Arabic', isJa=lang==='Japanese', isZh=lang==='Chinese';
 
-// ═══════════════════════════════════════════════════
-//  GOOGLE TTS (Web Speech Synthesis)
-// ═══════════════════════════════════════════════════
-function speakOut(text){{
-  if(!window.speechSynthesis){{ setState('','Ready'); return; }}
-  window.speechSynthesis.cancel();
-  isSpeaking=true;
-  setState('speaking','🔊 Alex is speaking...');
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang=currentLang;
-  u.rate=0.93; u.pitch=1.08; u.volume=1.0;
-
-  // Prefer Google TTS voice for the language
-  function pickVoice(){{
-    const voices=window.speechSynthesis.getVoices();
-    const lc=currentLang.split('-')[0];
-    // Priority: Google + language match > any language match > default
-    return voices.find(v=>v.lang.startsWith(lc)&&/google/i.test(v.name))
-        || voices.find(v=>v.lang.startsWith(lc)&&/female|samantha|zira|hazel/i.test(v.name))
-        || voices.find(v=>v.lang.startsWith(lc))
-        || null;
+  // ── Medical term explanations with translations ─────────
+  if(q.match(/exercise angina|exercise.induced angina/)){{
+    if(isHi) return"व्यायाम एनजाइना तब होता है जब व्यायाम के दौरान हृदय को पर्याप्त रक्त नहीं मिलता, जिससे सीने में दर्द होता है। यह कोरोनरी धमनी रोग का संकेत हो सकता है। कृपया हृदय रोग विशेषज्ञ से परामर्श लें।";
+    if(isKn) return"ವ್ಯಾಯಾಮ ಆಂಜಿನಾ ಎಂದರೆ ವ್ಯಾಯಾಮ ಸಮಯದಲ್ಲಿ ಹೃದಯಕ್ಕೆ ಸಾಕಷ್ಟು ರಕ್ತ ಸಿಗದಿದ್ದಾಗ ಎದೆನೋವು ಉಂಟಾಗುತ್ತದೆ. ಇದು ಕಾರ್ಡಿಯಾಕ್ ಸ್ಥಿತಿಯ ಸಂಕೇತ.";
+    if(isTa) return"உடற்பயிற்சி ஆஞ்சினா என்பது உடற்பயிற்சியின்போது இதயத்திற்கு போதுமான இரத்தம் கிடைக்காதபோது மார்பு வலி ஏற்படுவதாகும். இது கரோனரி தமனி நோயின் அறிகுறியாக இருக்கலாம்.";
+    if(isTe) return"వ్యాయామ ఆంజినా అంటే వ్యాయామం సమయంలో గుండెకు తగినంత రక్తం అందకపోవడం వల్ల ఛాతీ నొప్పి వస్తుంది. ఇది కరోనరీ ఆర్టరీ వ్యాధికి సంకేతం కావచ్చు.";
+    if(isMl) return"വ്യായാമ ആൻജൈന എന്നത് വ്യായാമ സമയത്ത് ഹൃദയത്തിന് ആവശ്യത്തിന് രക്തം ലഭിക്കാതിരിക്കുമ്പോൾ ഉണ്ടാകുന്ന നെഞ്ചുവേദനയാണ്. ഇത് കൊറോണറി ആർട്ടറി രോഗത്തിന്റെ സൂചനയാകാം.";
+    if(isFr) return"L'angine d'effort survient quand le cœur manque de sang pendant l'exercice, causant une douleur thoracique. C'est souvent un signe de maladie coronarienne. Consultez un cardiologue.";
+    if(isEs) return"La angina de esfuerzo ocurre cuando el corazón no recibe suficiente sangre durante el ejercicio, causando dolor en el pecho. Puede ser señal de enfermedad coronaria. Consulte a un cardiólogo.";
+    if(isAr) return"ذبحة صدرية التمرين تحدث عندما لا يحصل القلب على دم كافٍ أثناء التمرين مما يسبب ألماً في الصدر. قد تكون علامة على مرض الشريان التاجي.";
+    if(isJa) return"労作性狭心症とは、運動中に心臓への血流が不足して胸痛が起こる症状です。冠動脈疾患のサインである可能性があります。心臓専門医に相談してください。";
+    if(isZh) return"劳力性心绞痛是指运动时心脏供血不足引起的胸痛。这可能是冠状动脉疾病的信号，请咨询心脏病专科医生。";
+    return"Exercise Angina means chest pain or discomfort that occurs during physical activity because the heart muscle isn't getting enough blood. It's often a sign of narrowed coronary arteries (coronary artery disease). Always report exercise-induced chest pain to your cardiologist immediately.";
   }}
 
-  const v=pickVoice();
-  if(v) u.voice=v;
+  if(q.match(/st depression|st.t depression/)){{
+    if(isHi) return"ST डिप्रेशन ECG में एक असामान्यता है जो दिखाती है कि हृदय की मांसपेशी को पर्याप्त ऑक्सीजन नहीं मिल रही। यह इस्केमिया का संकेत हो सकता है।";
+    if(isFr) return"La dépression ST sur un ECG indique que le muscle cardiaque reçoit moins d'oxygène. Une valeur supérieure à 2mm est cliniquement significative et peut indiquer une ischémie cardiaque.";
+    if(isEs) return"La depresión del ST en el ECG indica que el músculo cardíaco recibe menos oxígeno de lo normal. Un valor mayor a 2mm es clínicamente significativo e indica posible isquemia.";
+    if(isAr) return"انخفاض ST على تخطيط القلب يشير إلى نقص الأكسجين في عضلة القلب. القيم أعلى من 2 ملم تعتبر مهمة سريرياً وقد تشير إلى نقص تروية القلب.";
+    if(isJa) return"ST低下はECG上の異常で、心筋への酸素供給が不足していることを示します。2mm以上の低下は臨床的に重要で、心筋虚血の可能性があります。";
+    if(isZh) return"ST段压低是心电图上的异常，表明心肌供氧不足。超过2毫米的压低具有临床意义，可能提示心肌缺血。";
+    return"ST Depression on an ECG (oldpeak value) measures how much the ST segment drops below the baseline during exercise stress testing. Values above 1-2mm indicate the heart muscle isn't receiving enough oxygen — a strong predictor of coronary artery disease. Higher values carry greater cardiac risk.";
+  }}
 
-  u.onend=()=>{{
-    isSpeaking=false;
-    setState('','Ready — tap to speak again');
-    if(continuousMode) setTimeout(startListen,500);
-  }};
-  u.onerror=()=>{{ isSpeaking=false; setState('','Ready'); }};
-  window.speechSynthesis.speak(u);
+  if(q.match(/typical angina/)){{
+    if(isHi) return"विशिष्ट एनजाइना सीने में दबाव या दर्द की क्लासिक अनुभूति है जो परिश्रम से बढ़ती है और आराम से कम होती है। यह कोरोनरी धमनी रोग का सबसे स्पष्ट संकेत है।";
+    if(isFr) return"L'angine typique est une douleur thoracique classique — pression ou oppression — déclenchée par l'effort et soulagée au repos. C'est le signe le plus clair d'une maladie coronarienne.";
+    if(isEs) return"La angina típica es el dolor clásico del pecho — presión u opresión — desencadenado por el esfuerzo y aliviado con el reposo. Es la señal más clara de enfermedad coronaria.";
+    return"Typical Angina is the classic chest pain — pressure, tightness or squeezing in the chest — triggered by physical exertion or emotional stress and relieved by rest or nitroglycerin. It has 3 features: substernal discomfort, provoked by exertion, relieved by rest. It strongly suggests coronary artery disease.";
+  }}
+
+  if(q.match(/atypical angina/)){{
+    if(isHi) return"असामान्य एनजाइना में सीने में दर्द के विशिष्ट लक्षण नहीं होते। दर्द कंधे, जबड़े या पीठ में हो सकता है। यह महिलाओं में अधिक आम है।";
+    if(isFr) return"L'angine atypique n'a que 1-2 des caractéristiques classiques. La douleur peut irradier vers l'épaule, la mâchoire ou le dos. Elle est plus fréquente chez les femmes et les diabétiques.";
+    if(isEs) return"La angina atípica solo tiene 1-2 de las características clásicas. El dolor puede irradiarse al hombro, mandíbula o espalda. Es más común en mujeres y diabéticos.";
+    return"Atypical Angina has only 1-2 of the classic angina features. The discomfort may be in the shoulder, jaw, arm, or back instead of the chest — or may feel like indigestion. It's more common in women, diabetics, and elderly patients. Still needs cardiac evaluation.";
+  }}
+
+  if(q.match(/non.anginal|non anginal/)){{
+    if(isHi) return"गैर-एनजाइनल दर्द सीने में दर्द है जो हृदय से संबंधित नहीं है। यह मांसपेशियों, पाचन या चिंता के कारण हो सकता है, लेकिन सुनिश्चित करने के लिए जांच जरूरी है।";
+    if(isFr) return"La douleur non-angineuse est une douleur thoracique qui ne provient pas du cœur — elle peut venir des muscles, de l'œsophage ou du stress. Mais une évaluation cardiaque est toujours recommandée.";
+    return"Non-anginal Pain is chest discomfort that doesn't fit the pattern of cardiac angina. It may come from muscles, esophagus, ribs, or anxiety. It has none of the classic angina features. Lower cardiac risk, but still important to evaluate with a doctor to rule out heart disease.";
+  }}
+
+  if(q.match(/asymptomatic/)){{
+    if(isHi) return"असिम्प्टोमेटिक का मतलब है कोई लक्षण नहीं। दिल की बीमारी में यह खतरनाक हो सकता है क्योंकि कुछ लोगों को हार्ट अटैक से पहले कोई दर्द नहीं होता।";
+    if(isFr) return"Asymptomatique signifie sans symptômes. Paradoxalement, les maladies cardiaques asymptomatiques peuvent être les plus dangereuses car elles progressent sans avertissement. Un dépistage régulier est crucial.";
+    if(isEs) return"Asintomático significa sin síntomas. Paradójicamente, la enfermedad cardíaca asintomática puede ser la más peligrosa porque progresa sin advertencia. El chequeo regular es crucial.";
+    return"Asymptomatic means having no symptoms — no chest pain, no shortness of breath. Paradoxically, it can be most dangerous in heart disease, as silent heart attacks occur without warning. 'Silent ischemia' is common in diabetics and elderly. Regular screening and check-ups are essential.";
+  }}
+
+  if(q.match(/normal ecg|normal result/)){{
+    if(isHi) return"सामान्य ECG का मतलब है हृदय की विद्युत गतिविधि सही है। कोई असामान्यता नहीं पाई गई। यह एक अच्छा संकेत है लेकिन वार्षिक जांच जारी रखें।";
+    if(isFr) return"Un ECG normal signifie que l'activité électrique du cœur est normale — pas d'arythmie, pas d'ischémie détectable. C'est bon signe, mais continuez les contrôles annuels.";
+    return"A Normal ECG means the heart's electrical activity follows the expected pattern — normal P waves, QRS complexes, and T waves with proper timing. No ischemia, arrhythmia, or structural abnormalities detected. This is reassuring, but annual check-ups are still recommended.";
+  }}
+
+  if(q.match(/st.t abnormality|st.t wave/)){{
+    if(isHi) return"ST-T तरंग असामान्यता ECG पर एक असामान्यता है जो हृदय की मांसपेशी में ऑक्सीजन की कमी दिखाती है। यह कोरोनरी रोग, उच्च रक्तचाप या दवाओं के प्रभाव से हो सकता है।";
+    if(isFr) return"L'anomalie de l'onde ST-T sur l'ECG indique une repolarisation anormale du cœur. Elle peut être due à l'ischémie, l'hypertension ou certains médicaments. Une évaluation cardiologique est nécessaire.";
+    if(isEs) return"La anomalía de la onda ST-T en el ECG indica una repolarización anormal del corazón. Puede deberse a isquemia, hipertensión o medicamentos. Se necesita evaluación cardiológica.";
+    return"ST-T Wave Abnormality on ECG means the repolarization phase of the heart is irregular. This can indicate cardiac ischemia (reduced blood flow), left ventricular hypertrophy, electrolyte imbalances, or medication effects. It increases cardiac risk significantly and requires cardiologist evaluation.";
+  }}
+
+  if(q.match(/lv hypertrophy|left ventricular/)){{
+    if(isHi) return"LV हाइपरट्रॉफी का मतलब है हृदय के बाएं कक्ष की दीवार मोटी हो गई है। यह उच्च रक्तचाप के कारण होता है और हृदय रोग का खतरा बढ़ाता है।";
+    if(isFr) return"L'hypertrophie ventriculaire gauche (HVG) signifie que le muscle du ventricule gauche s'est épaissi, souvent à cause de l'hypertension. Elle augmente le risque d'insuffisance cardiaque.";
+    if(isEs) return"La hipertrofia ventricular izquierda (HVI) significa que el músculo del ventrículo izquierdo se ha engrosado, generalmente por hipertensión. Aumenta el riesgo de insuficiencia cardíaca.";
+    return"LV Hypertrophy (Left Ventricular Hypertrophy) means the heart muscle on the left side has thickened — like a muscle that's been overworked. It's usually caused by long-standing hypertension. It increases the risk of heart failure, arrhythmias, and sudden cardiac death. Blood pressure control is critical.";
+  }}
+
+  if(q.match(/upsloping|up.sloping/)){{
+    if(isHi) return"अपस्लोपिंग ST सेगमेंट का मतलब है ECG में ST रेखा ऊपर की ओर झुकी है। यह अपेक्षाकृत कम जोखिम वाला संकेत है लेकिन निगरानी की आवश्यकता है।";
+    if(isFr) return"Un segment ST ascendant (upsloping) est le moins préoccupant des changements ST. Il indique un risque cardiaque modéré et nécessite une surveillance, mais est moins grave que plat ou descendant.";
+    return"Upsloping ST segment means the ST segment on the ECG slopes upward — this is the least concerning of the three ST slope patterns. It represents moderate cardiac risk. Often seen in early or mild coronary artery disease. Requires monitoring but is generally less dangerous than flat or downsloping.";
+  }}
+
+  if(q.match(/flat st|flat.slope/)){{
+    if(isHi) return"फ्लैट ST सेगमेंट हृदय रोग का मध्यम जोखिम दर्शाता है। यह इस्केमिया का संकेत हो सकता है और हृदय रोग विशेषज्ञ से जांच जरूरी है।";
+    if(isFr) return"Un segment ST plat (flat) indique un risque cardiaque intermédiaire à élevé. C'est souvent associé à l'ischémie et nécessite une évaluation cardiologique approfondie.";
+    return"Flat ST segment means the ST segment lies horizontally on the ECG — intermediate to high cardiac risk. It's often associated with myocardial ischemia and coronary artery disease. More concerning than upsloping. Requires thorough cardiologist evaluation and possibly a stress test.";
+  }}
+
+  if(q.match(/downsloping|down.sloping/)){{
+    if(isHi) return"डाउनस्लोपिंग ST सेगमेंट तीनों में सबसे गंभीर है। यह गंभीर इस्केमिया का संकेत है और तत्काल हृदय रोग विशेषज्ञ से मिलना जरूरी है।";
+    if(isFr) return"Un segment ST descendant (downsloping) est le plus préoccupant des trois types. Il est fortement associé à une ischémie sévère et une maladie coronarienne grave. Consultation urgente recommandée.";
+    if(isEs) return"El segmento ST descendente (downsloping) es el más preocupante de los tres tipos. Está fuertemente asociado con isquemia severa y enfermedad coronaria grave. Se recomienda consulta urgente.";
+    return"Downsloping ST segment is the most serious of the three ST slope patterns — highest cardiac risk. It's strongly associated with severe myocardial ischemia and significant coronary artery disease. If you have downsloping ST changes, consult a cardiologist urgently for further evaluation.";
+  }}
+
+  // ── General health fallback ────────────────────────────
+  if(q.match(/symptom|sign|feel|ache|chest pain/)){{
+    if(isHi) return"हृदय रोग के सामान्य लक्षण: सीने में दर्द, सांस लेने में तकलीफ, थकान, धड़कन, चक्कर और पैरों में सूजन। ये लक्षण होने पर तुरंत डॉक्टर से मिलें।";
+    if(isKn) return"ಹೃದಯ ರೋಗದ ಸಾಮಾನ್ಯ ಲಕ್ಷಣಗಳು: ಎದೆ ನೋವು, ಉಸಿರಾಟದ ತೊಂದರೆ, ಆಯಾಸ, ಮತ್ತು ಕಾಲಿನ ಊತ. ಈ ಲಕ್ಷಣಗಳಿದ್ದರೆ ತಕ್ಷಣ ವೈದ್ಯರನ್ನು ಕಾಣಿ.";
+    if(isFr) return"Symptômes cardiaques courants: douleur thoracique, essoufflement, fatigue, palpitations, vertiges, gonflement des jambes. Consultez immédiatement si vous les ressentez.";
+    if(isEs) return"Síntomas cardíacos comunes: dolor en el pecho, dificultad para respirar, fatiga, palpitaciones, mareos, hinchazón en las piernas. Consulte inmediatamente si los experimenta.";
+    if(isAr) return"أعراض أمراض القلب الشائعة: ألم الصدر، ضيق التنفس، التعب، الخفقان، الدوخة، وتورم الساقين. استشر الطبيب فوراً إذا شعرت بهذه الأعراض.";
+    if(isJa) return"心臓病の一般的な症状：胸痛、息切れ、疲労感、動悸、めまい、脚のむくみ。これらの症状があればすぐに医師に相談してください。";
+    if(isZh) return"心脏病常见症状：胸痛、呼吸困难、疲劳、心悸、头晕和腿部肿胀。如有这些症状请立即就医。";
+    return"Common heart disease symptoms: chest pain or tightness, shortness of breath, fatigue, palpitations, dizziness, and swelling in legs. Please see a cardiologist if you experience these.";
+  }}
+  if(q.match(/cholesterol|diet|food|eat/)){{
+    if(isFr) return"Pour réduire le cholestérol: mangez des flocons d'avoine, des noix et des acides gras oméga-3; évitez les graisses trans et la viande rouge. L'exercice régulier aide beaucoup.";
+    if(isEs) return"Para reducir el colesterol: coma avena, nueces y ácidos grasos omega-3; evite las grasas trans y la carne roja. El ejercicio regular y no fumar también ayudan significativamente.";
+    if(isHi) return"कोलेस्ट्रॉल कम करने के लिए: जई, मेवे और ओमेगा-3 खाएं; ट्रांस फैट और लाल मांस से बचें। नियमित व्यायाम और धूम्रपान न करना भी बहुत मदद करता है।";
+    return"To lower cholesterol: eat oats, nuts, and omega-3 fatty acids; avoid trans fats and red meat. Regular exercise and not smoking also help significantly.";
+  }}
+  if(q.match(/blood pressure|bp|hypertension/)){{
+    if(isFr) return"La tension normale est inférieure à 120/80 mmHg. Réduisez le sel, faites de l'exercice, évitez de fumer, gérez le stress et prenez vos médicaments prescrits.";
+    if(isEs) return"La presión normal es inferior a 120/80 mmHg. Reduzca la sal, haga ejercicio, evite fumar, controle el estrés y tome los medicamentos recetados.";
+    if(isHi) return"सामान्य BP 120/80 mmHg से कम होना चाहिए। नमक कम करें, रोज व्यायाम करें, धूम्रपान छोड़ें, तनाव प्रबंधन करें और दवाएं नियमित लें।";
+    return"Normal BP is below 120/80 mmHg. Reduce salt, exercise daily, avoid smoking, manage stress, and take prescribed medications to control high blood pressure.";
+  }}
+  if(q.match(/ecg|electrocardiogram|heart rate|ekg/)){{
+    if(isFr) return"Un ECG enregistre l'activité électrique du cœur. Les anomalies ST-T peuvent indiquer une ischémie. Faites toujours interpréter votre ECG par un cardiologue.";
+    return"An ECG records the heart's electrical activity. ST-T wave changes may indicate ischemia. Always have your ECG interpreted by a cardiologist for accurate diagnosis.";
+  }}
+  if(q.match(/hospital|emergency|ambulance|112/)){{
+    if(isHi) return"हृदय संबंधी आपात स्थिति में तुरंत 112 पर कॉल करें। आप ऐप के 'नज़दीकी अस्पताल' सेक्शन में पास के हृदय अस्पताल भी देख सकते हैं।";
+    return"For cardiac emergencies in India, call 112 immediately. You can also find nearby cardiac hospitals in the Hospitals Near Me section of this app.";
+  }}
+  if(q.match(/tips?|health|prevent|protect/)){{
+    if(isFr) return"Conseils pour la santé cardiaque: exercice régulier, alimentation saine, arrêt du tabac, limitation de l'alcool, gestion du stress, contrôle de la tension et du cholestérol.";
+    if(isEs) return"Consejos para la salud cardíaca: ejercicio regular, dieta saludable, dejar de fumar, limitar el alcohol, controlar el estrés, y controlar la presión y el colesterol.";
+    return"Top heart health tips: exercise regularly, eat a heart-healthy diet, quit smoking, limit alcohol, manage stress, control BP & cholesterol, and get regular check-ups.";
+  }}
+  return"Hello! I'm Alex, your AI cardiac health assistant. Ask me about heart disease symptoms, cholesterol, blood pressure, or click any Medical Term chip above to hear a voice explanation. I support 11 languages!";
 }}
 
-// Voices load asynchronously on Chrome
-if(window.speechSynthesis){{
-  window.speechSynthesis.onvoiceschanged=()=>{{}};
+// ─── Speech synthesis ─────────────────────────────────────
+function speakOut(text){{
+  if(!window.speechSynthesis){{ setState('','Done'); return; }}
+  setState('speaking','Alex is speaking...');
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang=document.getElementById('langSel').value;
+  u.rate=.95; u.pitch=1.1;
+  const voices=speechSynthesis.getVoices();
+  const lc=u.lang.split('-')[0];
+  const v=voices.find(v=>v.lang.startsWith(lc)&&/female|woman|samantha|google/i.test(v.name))
+        ||voices.find(v=>v.lang.startsWith(lc))
+        ||null;
+  if(v)u.voice=v;
+  u.onend=()=>setState('','Ask another question...');
+  u.onerror=()=>setState('','');
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
 }}
 
-// ═══════════════════════════════════════════════════
-//  GREET ON LOAD
-// ═══════════════════════════════════════════════════
-setTimeout(()=>{{
-  const greet=langGreetings[currentLang]||langGreetings['en-US'];
-  addMsg('alex',greet);
-  speakOut(greet);
-}},800);
+window.speechSynthesis?.addEventListener?.('voiceschanged',()=>{{}});
 </script>
 </body>
 </html>"""
-    components.html(html, height=height, scrolling=True)
+    components.html(html, height=height, scrolling=False)
 
 
 # ═════════════════════════════════════════════════════════════
@@ -1063,6 +922,36 @@ window.addEventListener('resize',()=>{renderer.setSize(window.innerWidth,window.
 
 
 # ═════════════════════════════════════════════════════════════
+#  TOP NAVIGATION BAR
+# ═════════════════════════════════════════════════════════════
+def render_top_nav():
+    """Horizontal pill navigation bar shown on every authenticated page."""
+    if not st.session_state.logged_in:
+        return
+    pages = [
+        ("home",      T("nav_home")),
+        ("prediction",T("nav_predict")),
+        ("voice",     T("nav_voice")),
+        ("terms",     "📖 Medical Terms"),
+        ("doctors",   T("nav_doctors")),
+        ("hospitals", T("nav_hospitals")),
+        ("about",     T("nav_about")),
+    ]
+    cur = st.session_state.page
+    # Build one-row nav with columns
+    cols = st.columns(len(pages))
+    for col, (pk, lbl) in zip(cols, pages):
+        active = cur == pk
+        with col:
+            label_with_mark = f"▸ {lbl}" if active else lbl
+            if st.button(label_with_mark, key=f"topnav_{pk}", use_container_width=True):
+                st.session_state.page = pk
+                st.rerun()
+    st.markdown("<hr style='border-color:rgba(255,255,255,.06);margin:6px 0 22px;'>",
+                unsafe_allow_html=True)
+
+
+# ═════════════════════════════════════════════════════════════
 #  PAGE: LOGIN
 # ═════════════════════════════════════════════════════════════
 def page_login():
@@ -1100,6 +989,7 @@ Demo: <b>admin/admin123</b> &nbsp;|&nbsp; <b>doctor/doc2024</b> &nbsp;|&nbsp; <b
 #  PAGE: HOME
 # ═════════════════════════════════════════════════════════════
 def page_home():
+    render_top_nav()
     uname = USERS.get(st.session_state.username, {}).get("name", "User")
     st.markdown(f'<div class="ptitle">❤️ {T("title")}</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="psub">{T("welcome")}, <b>{uname}</b> — {datetime.now().strftime("%A, %d %B %Y")}</div>', unsafe_allow_html=True)
@@ -1141,6 +1031,7 @@ Always consult a qualified cardiologist for clinical evaluation.
 #  PAGE: PREDICTION
 # ═════════════════════════════════════════════════════════════
 def page_prediction():
+    render_top_nav()
     st.markdown(f'<div class="ptitle">🔬 {T("title")}</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="psub">{T("subtitle")}</div>', unsafe_allow_html=True)
 
@@ -1233,28 +1124,29 @@ def page_prediction():
 #  PAGE: ALEX VOICE ASSISTANT
 # ═════════════════════════════════════════════════════════════
 def page_voice():
-    st.markdown('<div class="ptitle">🎙️ Alex \u2013 Google Voice AI Assistant</div>', unsafe_allow_html=True)
-    st.markdown('<div class="psub">Live Google Speech Recognition \u00b7 8 Languages \u00b7 Mobile Friendly \u00b7 Claude AI Powered</div>', unsafe_allow_html=True)
+    render_top_nav()
+    st.markdown('<div class="ptitle">🎙️ Alex – AI Voice Assistant</div>', unsafe_allow_html=True)
+    st.markdown('<div class="psub">Siri-like voice AI for cardiac health — speak, listen, and get answers in 11 languages</div>', unsafe_allow_html=True)
 
     lang_bcp = {"en":"en-US","hi":"hi-IN","kn":"kn-IN","ta":"ta-IN","te":"te-IN","ml":"ml-IN"}.get(st.session_state.language,"en-US")
-    api_key  = st.sidebar.text_input("\U0001f511 Anthropic API Key (for live AI)", type="password", help="Enter your Anthropic key for live Claude AI answers. Without it, Alex uses smart built-in responses.")
+    api_key  = st.sidebar.text_input("🔑 Anthropic API Key (for live AI)", type="password", help="Enter your Anthropic key. Without it, Alex uses built-in responses.")
 
-    col1, col2, col3 = st.columns(3)
-    col1.markdown("""<div style="background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.25);border-radius:12px;padding:10px 14px;font-size:12px;color:rgba(0,230,118,.9);">
-\U0001f3a4 <b>Tap orb or mic button</b><br><span style="color:rgba(200,200,230,.5);">Allow microphone when prompted</span></div>""", unsafe_allow_html=True)
-    col2.markdown("""<div style="background:rgba(123,47,247,.08);border:1px solid rgba(123,47,247,.25);border-radius:12px;padding:10px 14px;font-size:12px;color:rgba(200,150,255,.9);">
-\U0001f310 <b>8 Languages supported</b><br><span style="color:rgba(200,200,230,.5);">Tap any flag to switch language</span></div>""", unsafe_allow_html=True)
-    col3.markdown("""<div style="background:rgba(232,41,76,.08);border:1px solid rgba(232,41,76,.25);border-radius:12px;padding:10px 14px;font-size:12px;color:rgba(255,150,150,.9);">
-\U0001f4f1 <b>Works on mobile too</b><br><span style="color:rgba(200,200,230,.5);">Chrome/Edge \u00b7 Safari on iOS</span></div>""", unsafe_allow_html=True)
+    st.markdown("""
+<div style="background:rgba(123,47,247,.12);border:1px solid rgba(123,47,247,.3);
+border-radius:14px;padding:12px 18px;font-size:13px;color:rgba(200,200,240,.8);margin-bottom:16px;">
+💡 <b>How to use Alex:</b> Select a language (🇬🇧 🇮🇳 🇫🇷 🇪🇸 🇸🇦 🇯🇵 🇨🇳 and more), then click the glowing orb OR tap 🎤 to speak.
+Click any <span style="color:#b085ff;">purple Medical Term chip</span> to hear an instant voice explanation in your language.
+Add your Anthropic API key (sidebar) for deeper live AI answers.
+</div>""", unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    alex_siri_component(height=860, api_key=api_key, lang_bcp=lang_bcp)
+    alex_siri_component(height=820, api_key=api_key, lang_bcp=lang_bcp)
 
 
 # ═════════════════════════════════════════════════════════════
 #  PAGE: DOCTORS
 # ═════════════════════════════════════════════════════════════
 def page_doctors():
+    render_top_nav()
     st.markdown('<div class="ptitle">👨‍⚕️ Our Medical Team</div>', unsafe_allow_html=True)
     st.markdown('<div class="psub">Top cardiologists in Bangalore — verified specialists</div>', unsafe_allow_html=True)
 
@@ -1291,6 +1183,7 @@ def page_doctors():
 #  PAGE: HOSPITALS
 # ═════════════════════════════════════════════════════════════
 def page_hospitals():
+    render_top_nav()
     st.markdown('<div class="ptitle">🏥 Hospitals Near You</div>', unsafe_allow_html=True)
     st.markdown('<div class="psub">Cardiac hospitals in Bangalore — live map & contacts</div>', unsafe_allow_html=True)
 
@@ -1365,6 +1258,7 @@ function geo(){
 #  PAGE: ABOUT
 # ═════════════════════════════════════════════════════════════
 def page_about():
+    render_top_nav()
     st.markdown('<div class="ptitle">ℹ️ About CardioAI</div>', unsafe_allow_html=True)
     st.markdown('<div class="psub">Empowering early cardiac detection through AI</div>', unsafe_allow_html=True)
     c1,c2 = st.columns([1.2,1])
@@ -1376,12 +1270,12 @@ def page_about():
 <h3 style="color:#e8294c;margin:18px 0 10px;">🔬 The Technology</h3>
 <p>Our ensemble model (Random Forest + Gradient Boosting) is trained on the UCI Heart Disease Dataset — validated at <b>96.7% accuracy</b>. It analyses 11 clinical biomarkers including ECG patterns, cholesterol, blood pressure, and exercise stress results.</p>
 <h3 style="color:#e8294c;margin:18px 0 10px;">🎙️ Alex — Voice AI</h3>
-<p>Alex is powered by Claude (Anthropic) and supports <b>6 languages</b>: English, Hindi, Kannada, Tamil, Telugu, and Malayalam — with full voice synthesis via Web Speech API and gTTS.</p>
+<p>Alex is powered by Claude (Anthropic) and supports <b>11 languages</b>: English, Hindi, Kannada, Tamil, Telugu, Malayalam, French, Spanish, Arabic, Japanese, and Chinese — with full voice synthesis via Web Speech API and gTTS.</p>
 </div>""", unsafe_allow_html=True)
     with c2:
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.markdown("**📊 Platform Stats**")
-        for lbl,val in [("🔬 AI Accuracy","96.7%"),("🌍 Languages","6"),("👨‍⚕️ Partner Doctors","6+"),("🏥 Hospitals","8+"),("📱 Platform","Web, Mobile"),("🔒 Privacy","HIPAA-aligned")]:
+        for lbl,val in [("🔬 AI Accuracy","96.7%"),("🌍 Languages","11"),("👨‍⚕️ Partner Doctors","6+"),("🏥 Hospitals","8+"),("📱 Platform","Web, Mobile"),("🔒 Privacy","HIPAA-aligned")]:
             st.markdown(f'<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:14px;"><span style="color:rgba(200,200,230,.7);">{lbl}</span><span style="color:#e8294c;font-weight:700;">{val}</span></div>', unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("#### 📬 Contact Us")
@@ -1394,6 +1288,143 @@ def page_about():
   </div>
   <div style="margin-top:10px;font-size:12px;color:rgba(200,200,230,.4);">📍 5th Floor, Prestige Tech Park, Outer Ring Road, Bengaluru – 560103</div>
 </div>""", unsafe_allow_html=True)
+
+
+# ═════════════════════════════════════════════════════════════
+#  PAGE: MEDICAL TERMS GLOSSARY WITH VOICE
+# ═════════════════════════════════════════════════════════════
+def page_medical_terms():
+    render_top_nav()
+    st.markdown('<div class="ptitle">📖 Medical Terms Explained</div>', unsafe_allow_html=True)
+    st.markdown('<div class="psub">Understand every term in your heart health report — with voice in 11 languages</div>', unsafe_allow_html=True)
+
+    lang_bcp = {"en":"en-US","hi":"hi-IN","kn":"kn-IN","ta":"ta-IN","te":"te-IN","ml":"ml-IN"}.get(st.session_state.language,"en-US")
+    api_key  = st.sidebar.text_input("🔑 Anthropic API Key (for live AI voice)", type="password", key="terms_key", help="Optional: enables live AI explanations in any language")
+
+    st.markdown("""
+<div style="background:rgba(123,47,247,.12);border:1px solid rgba(123,47,247,.3);
+border-radius:14px;padding:12px 18px;font-size:13px;color:rgba(200,200,240,.8);margin-bottom:20px;">
+💡 <b>How to use:</b> Select your language from the voice component below, then click any term card's 🔊 button — Alex will read the explanation aloud in your chosen language.
+With an Anthropic API key, you get deeper AI-powered explanations.
+</div>""", unsafe_allow_html=True)
+
+    # ── Two-column term cards ──────────────────────────────────
+    TERMS = [
+        {
+            "icon":"🏃", "term":"Exercise Angina", "cat":"Chest Pain Type",
+            "short":"Chest pain during physical activity due to reduced blood flow",
+            "detail":"Exercise-Induced Angina means your heart muscle doesn't receive enough oxygenated blood during physical exertion. This triggers chest tightness or pressure that typically disappears with rest. It's a key indicator of coronary artery blockage and carries significant cardiac risk.",
+            "risk":"High", "color":"#e8294c",
+            "voice_q":"Explain Exercise Angina in simple terms for a cardiac patient",
+        },
+        {
+            "icon":"📉", "term":"ST Depression", "cat":"ST Parameter",
+            "short":"ECG sign showing heart muscle getting insufficient oxygen",
+            "detail":"The oldpeak value on your report represents ST segment depression — how far the ST segment dips below baseline on the ECG during a stress test. Values > 1mm suggest ischemia; > 2mm is clinically significant and strongly associated with coronary artery disease.",
+            "risk":"High", "color":"#e8294c",
+            "voice_q":"Explain ST Depression on an ECG in simple language",
+        },
+        {
+            "icon":"💔", "term":"Typical Angina", "cat":"Chest Pain Type",
+            "short":"Classic heart chest pain with all 3 defining features",
+            "detail":"Typical Angina has all three hallmarks: (1) substernal chest pressure/tightness, (2) triggered by exertion or emotional stress, (3) relieved by rest or nitroglycerin within minutes. This pattern has the highest predictive value for significant coronary artery disease.",
+            "risk":"High", "color":"#e8294c",
+            "voice_q":"Explain Typical Angina chest pain in simple terms",
+        },
+        {
+            "icon":"💛", "term":"Atypical Angina", "cat":"Chest Pain Type",
+            "short":"Chest discomfort with only 1-2 classic angina features",
+            "detail":"Atypical Angina has only 1-2 of the three classic angina features. Pain may radiate to the jaw, arm, or back, or feel like indigestion. More common in women, diabetics, and elderly. Still warrants cardiac investigation as it can represent real coronary disease.",
+            "risk":"Medium", "color":"#ffd740",
+            "voice_q":"Explain Atypical Angina and how it differs from Typical Angina",
+        },
+        {
+            "icon":"🫀", "term":"Non-anginal Pain", "cat":"Chest Pain Type",
+            "short":"Chest pain not originating from the heart",
+            "detail":"Non-anginal Pain meets none of the three angina criteria. It's usually from non-cardiac causes: musculoskeletal, gastrointestinal (GERD), or anxiety/panic. While lower cardiac risk, a full cardiac work-up is still recommended to safely exclude heart disease.",
+            "risk":"Low–Medium", "color":"#69f0ae",
+            "voice_q":"Explain Non-anginal Chest Pain — what is it and what causes it",
+        },
+        {
+            "icon":"🔕", "term":"Asymptomatic", "cat":"Chest Pain Type",
+            "short":"No chest symptoms — but silent heart disease can still be present",
+            "detail":"Asymptomatic means you have no chest pain, shortness of breath, or other cardiac symptoms. Paradoxically, this can be the most dangerous category — 'silent ischemia' is common in diabetics and elderly. Regular cardiac screening is critical even without symptoms.",
+            "risk":"Variable", "color":"#ffd740",
+            "voice_q":"Explain Asymptomatic heart condition and why it can be dangerous",
+        },
+        {
+            "icon":"✅", "term":"Normal ECG", "cat":"Resting ECG",
+            "short":"Heart's electrical activity shows no abnormality",
+            "detail":"A Normal ECG means all electrical intervals (PR, QRS, QT) are within normal range, P waves and T waves are properly shaped, and no ST changes, arrhythmias, or bundle branch blocks are detected. This is a positive finding, but annual monitoring is still advised.",
+            "risk":"Low", "color":"#69f0ae",
+            "voice_q":"What does a Normal ECG result mean for heart health",
+        },
+        {
+            "icon":"⚠️", "term":"ST-T Abnormality", "cat":"Resting ECG",
+            "short":"Irregular repolarization of the heart on ECG",
+            "detail":"ST-T Wave Abnormality indicates the heart's recovery phase (repolarization) is irregular. Causes include myocardial ischemia, left ventricular hypertrophy, electrolyte imbalances, or medication effects. It significantly raises cardiac risk and requires specialist evaluation.",
+            "risk":"High", "color":"#e8294c",
+            "voice_q":"Explain ST-T Wave Abnormality on ECG and what it means for the heart",
+        },
+        {
+            "icon":"🫶", "term":"LV Hypertrophy", "cat":"Resting ECG",
+            "short":"Thickened left ventricle heart muscle wall",
+            "detail":"Left Ventricular Hypertrophy (LVH) means the heart's main pumping chamber has a thickened wall — usually from working against chronically high blood pressure. LVH significantly increases risk of heart failure, stroke, and sudden cardiac death. Requires blood pressure control.",
+            "risk":"High", "color":"#e8294c",
+            "voice_q":"Explain LV Hypertrophy — what it is and why it matters",
+        },
+        {
+            "icon":"📈", "term":"Upsloping ST", "cat":"ST Slope",
+            "short":"ST segment slopes upward — lowest risk ST pattern",
+            "detail":"Upsloping ST segment is the least concerning of the three slope patterns. The ST segment rises positively after the QRS complex. While still associated with moderate cardiac risk, it's generally less indicative of severe ischemia than flat or downsloping patterns.",
+            "risk":"Moderate", "color":"#ffd740",
+            "voice_q":"Explain Upsloping ST segment and what it means on a stress ECG",
+        },
+        {
+            "icon":"➖", "term":"Flat ST Segment", "cat":"ST Slope",
+            "short":"Horizontal ST — intermediate to high cardiac risk",
+            "detail":"Flat (horizontal) ST segment means the ST lies parallel to the baseline after the QRS. This is the intermediate pattern with higher risk than upsloping. Often associated with subendocardial ischemia and coronary artery disease. Requires echocardiography or angiography evaluation.",
+            "risk":"High", "color":"#e8294c",
+            "voice_q":"Explain Flat ST segment on ECG and its cardiac significance",
+        },
+        {
+            "icon":"📉", "term":"Downsloping ST", "cat":"ST Slope",
+            "short":"Most serious ST pattern — strongly suggests severe ischemia",
+            "detail":"Downsloping ST segment is the most serious of the three slope patterns — highest cardiac risk. The ST segment slopes downward after the QRS, strongly indicating severe myocardial ischemia and significant coronary artery blockage. Urgent cardiologist consultation is required.",
+            "risk":"Very High", "color":"#e8294c",
+            "voice_q":"Explain Downsloping ST segment — why is it the most dangerous ST pattern",
+        },
+    ]
+
+    # Render term cards in 2 columns
+    for i in range(0, len(TERMS), 2):
+        c1, c2 = st.columns(2)
+        for col, term in zip([c1, c2], TERMS[i:i+2]):
+            with col:
+                risk_bg = "rgba(232,41,76,.15)" if term["risk"] in ("High","Very High") else \
+                          "rgba(255,215,64,.12)" if term["risk"] == "Moderate" else \
+                          "rgba(105,240,174,.10)"
+                st.markdown(f"""
+<div class="glass-card" style="border-left:3px solid {term['color']};padding:18px 20px;">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+    <span style="font-size:26px;">{term['icon']}</span>
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;">{term['term']}</div>
+      <div style="font-size:11px;color:rgba(200,200,230,.45);letter-spacing:1px;text-transform:uppercase;">{term['cat']}</div>
+    </div>
+    <div style="margin-left:auto;background:{risk_bg};border:1px solid {term['color']}44;
+    border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:{term['color']};">
+      {term['risk']} Risk
+    </div>
+  </div>
+  <div style="font-size:13px;font-weight:600;color:rgba(220,220,250,.9);margin-bottom:6px;">{term['short']}</div>
+  <div style="font-size:12px;color:rgba(190,190,220,.65);line-height:1.6;">{term['detail']}</div>
+</div>""", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("### 🔊 Voice Explainer — Hear Any Term in 11 Languages")
+    st.markdown('<div class="psub">Alex will speak the explanation in your selected language</div>', unsafe_allow_html=True)
+    alex_siri_component(height=820, api_key=api_key, lang_bcp=lang_bcp)
 
 
 # ═════════════════════════════════════════════════════════════
@@ -1451,7 +1482,7 @@ border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;">
         st.markdown('<div style="font-size:11px;color:rgba(200,200,230,.35);letter-spacing:1.5px;margin-bottom:8px;">NAVIGATION</div>', unsafe_allow_html=True)
 
         if st.session_state.logged_in:
-            for pk,lbl in [("home",T("nav_home")),("prediction",T("nav_predict")),("voice",T("nav_voice")),("doctors",T("nav_doctors")),("hospitals",T("nav_hospitals")),("about",T("nav_about"))]:
+            for pk,lbl in [("home",T("nav_home")),("prediction",T("nav_predict")),("voice",T("nav_voice")),("terms","📖 Medical Terms"),("doctors",T("nav_doctors")),("hospitals",T("nav_hospitals")),("about",T("nav_about"))]:
                 if st.button(lbl, key=f"n_{pk}", use_container_width=True):
                     st.session_state.page=pk; st.rerun()
             st.markdown("<hr style='border-color:rgba(255,255,255,.07);margin:12px 0;'>", unsafe_allow_html=True)
@@ -1466,8 +1497,7 @@ border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;">
 padding:12px;font-size:11px;color:rgba(200,200,230,.3);line-height:1.8;">
 <b style="color:rgba(200,200,230,.5);">Install packages:</b><br>
 pip install streamlit numpy joblib<br>
-pandas folium streamlit-folium gtts<br>
-<b style="color:rgba(0,230,118,.4);">Voice: Chrome/Edge desktop<br>Safari on iOS (mobile)</b>
+pandas folium streamlit-folium gtts
 </div>""", unsafe_allow_html=True)
 
 
@@ -1475,7 +1505,7 @@ pandas folium streamlit-folium gtts<br>
 #  MAIN
 # ═════════════════════════════════════════════════════════════
 def main():
-    inject_video_background("6nKYfealjBg")   # ← YouTube video as background
+    inject_video_background("A8hMBdwGnxM")   # ← YouTube video as background
     inject_css()
     render_sidebar()
 
@@ -1483,8 +1513,12 @@ def main():
         page_login() if st.session_state.page=="login" else page_blocked()
     else:
         {"home":page_home,"prediction":page_prediction,"voice":page_voice,
+         "terms":page_medical_terms,
          "doctors":page_doctors,"hospitals":page_hospitals,"about":page_about
          }.get(st.session_state.page, page_home)()
 
 if __name__ == "__main__":
     main()
+
+
+
