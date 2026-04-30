@@ -74,8 +74,9 @@ LANG = {
 }
 
 # ── Session State ─────────────────────────────────────────────
-for k,v in {"logged_in":False,"username":"","page":"login","language":"en","pred_result":None,"terms_lang":"en-US"}.items():
+for k,v in {"logged_in":False,"username":"","page":"login","language":"en","pred_result":None}.items():
     if k not in st.session_state: st.session_state[k] = v
+st.session_state.language = "en"  # English only — locked
 
 def T(key): return LANG[st.session_state.language].get(key, LANG["en"].get(key, key))
 
@@ -89,7 +90,7 @@ model = load_model()
 # ═════════════════════════════════════════════════════════════
 #  YOUTUBE VIDEO BACKGROUND
 # ═════════════════════════════════════════════════════════════
-def inject_video_background(video_id="A8hMBdwGnxM"):
+def inject_video_background(video_id="6nKYfealjBg"):
     st.markdown(f"""
 <style>
 /* ── Make app transparent so video shows through ── */
@@ -120,7 +121,7 @@ section[data-testid="stSidebar"] {{
   overflow: hidden;
 ">
   <iframe id="yt-bg-frame"
-    src="https://www.youtube.com/embed/{video_id}?autoplay=1&mute=1&loop=1&playlist={video_id}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&vq=hd720&enablejsapi=0"
+    src="https://www.youtube.com/embed/{video_id}?autoplay=1&mute=1&loop=1&playlist={video_id}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&vq=hd720&enablejsapi=1"
     allow="autoplay; encrypted-media"
     frameborder="0"
     style="
@@ -136,6 +137,37 @@ section[data-testid="stSidebar"] {{
       filter: saturate(1.2) brightness(0.9);
     "
   ></iframe>
+
+  <!-- YouTube IFrame API: stop 10s before end, then restart -->
+  <script>
+  (function(){{
+    var tag=document.createElement('script');
+    tag.src='https://www.youtube.com/iframe_api';
+    document.head.appendChild(tag);
+    var player;
+    window.onYouTubeIframeAPIReady=function(){{
+      player=new YT.Player('yt-bg-frame',{{
+        events:{{
+          'onReady':function(e){{e.target.playVideo();}},
+          'onStateChange':function(e){{
+            if(e.data===YT.PlayerState.PLAYING){{
+              clearInterval(window._ytChk);
+              window._ytChk=setInterval(function(){{
+                try{{
+                  var dur=player.getDuration();
+                  var cur=player.getCurrentTime();
+                  if(dur>0 && cur >= dur-10){{
+                    player.seekTo(0,true);
+                  }}
+                }}catch(ex){{}}
+              }},500);
+            }}
+          }}
+        }}
+      }});
+    }};
+  }})();
+  </script>
 
   <!-- Gradient overlay so text stays readable -->
   <div style="
@@ -305,6 +337,19 @@ h1,h2,h3,h4 { color: var(--text) !important; font-family:'Syne',sans-serif !impo
 label { color: var(--muted) !important; font-size:13px !important; }
 p { color: rgba(210,210,240,0.85) !important; }
 
+/* ─── Hide Streamlit top horizontal nav bar ─── */
+header[data-testid="stHeader"],
+[data-testid="stToolbar"],
+[data-testid="stDecoration"],
+.stDeployButton,
+#MainMenu,
+footer,
+[data-testid="stStatusWidget"] {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+}
+
 /* Spinning heartbeat logo */
 @keyframes heartbeat { 0%,100%{transform:scale(1);}  50%{transform:scale(1.18);} }
 .hb { animation: heartbeat 1.2s ease-in-out infinite; display:inline-block; }
@@ -315,7 +360,7 @@ p { color: rgba(210,210,240,0.85) !important; }
 # ═════════════════════════════════════════════════════════════
 #  SIRI-LIKE ALEX COMPONENT  (full-featured voice AI in browser)
 # ═════════════════════════════════════════════════════════════
-def alex_siri_component(height=760, api_key="", lang_bcp="en-US"):
+def alex_siri_component(height=700, api_key="", lang_bcp="en-US"):
     html = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -484,8 +529,6 @@ body{{
   color:rgba(255,255,255,.75);
 }}
 .chip:hover{{background:rgba(200,75,158,.25);border-color:rgba(200,75,158,.5);color:white;}}
-.chip-term{{border-color:rgba(123,47,247,.35)!important;color:rgba(200,180,255,.85)!important;}}
-.chip-term:hover{{background:rgba(123,47,247,.3)!important;border-color:rgba(123,47,247,.7)!important;color:white!important;}}
 </style>
 </head>
 <body>
@@ -494,21 +537,8 @@ body{{
   <div class="alex-title">✦ ALEX</div>
   <div class="alex-sub">AI CARDIAC HEALTH ASSISTANT</div>
 
-  <!-- Settings -->
+  <!-- Settings: API key only (English locked) -->
   <div class="settings-row">
-    <select id="langSel" class="sel" onchange="updateLang()">
-      <option value="en-US" {'selected' if lang_bcp.startswith('en') else ''}>🇬🇧 English</option>
-      <option value="hi-IN" {'selected' if lang_bcp.startswith('hi') else ''}>🇮🇳 Hindi</option>
-      <option value="kn-IN" {'selected' if lang_bcp.startswith('kn') else ''}>🇮🇳 Kannada</option>
-      <option value="ta-IN" {'selected' if lang_bcp.startswith('ta') else ''}>🇮🇳 Tamil</option>
-      <option value="te-IN" {'selected' if lang_bcp.startswith('te') else ''}>🇮🇳 Telugu</option>
-      <option value="ml-IN" {'selected' if lang_bcp.startswith('ml') else ''}>🇮🇳 Malayalam</option>
-      <option value="fr-FR">🇫🇷 French</option>
-      <option value="es-ES">🇪🇸 Spanish</option>
-      <option value="ar-SA">🇸🇦 Arabic</option>
-      <option value="ja-JP">🇯🇵 Japanese</option>
-      <option value="zh-CN">🇨🇳 Chinese</option>
-    </select>
     <input id="apiKey" class="key-inp" type="password"
       value="{api_key}"
       placeholder="Anthropic API key (optional – for live AI)" />
@@ -533,8 +563,7 @@ body{{
   <!-- Wave strip -->
   <div class="wave-strip" id="waveStrip"></div>
 
-  <!-- Quick chips – General -->
-  <div style="font-size:11px;color:rgba(255,255,255,.35);letter-spacing:2px;text-align:center;margin-bottom:2px;">GENERAL QUESTIONS</div>
+  <!-- Quick chips -->
   <div class="chips">
     <div class="chip" onclick="ask('What are heart disease symptoms?')">❤️ Symptoms</div>
     <div class="chip" onclick="ask('How to lower cholesterol?')">🧪 Cholesterol</div>
@@ -542,25 +571,6 @@ body{{
     <div class="chip" onclick="ask('Tips for heart health?')">💪 Heart Tips</div>
     <div class="chip" onclick="ask('When should I see a doctor?')">👨‍⚕️ See Doctor</div>
     <div class="chip" onclick="ask('What does my ECG mean?')">📊 ECG</div>
-  </div>
-
-  <!-- Medical Terms chips -->
-  <div style="font-size:11px;color:rgba(255,255,255,.35);letter-spacing:2px;text-align:center;margin-top:6px;margin-bottom:2px;">📖 MEDICAL TERMS — CLICK TO HEAR EXPLANATION IN VOICE</div>
-  <div class="chips">
-    <div class="chip chip-term" onclick="ask('Explain Exercise Angina in simple terms')">🏃 Exercise Angina</div>
-    <div class="chip chip-term" onclick="ask('Explain ST Depression in an ECG')">📉 ST Depression</div>
-    <div class="chip chip-term" onclick="ask('Explain Typical Angina chest pain')">💔 Typical Angina</div>
-    <div class="chip chip-term" onclick="ask('Explain Atypical Angina chest pain')">💛 Atypical Angina</div>
-    <div class="chip chip-term" onclick="ask('Explain Non-anginal Pain in chest')">🫀 Non-anginal Pain</div>
-    <div class="chip chip-term" onclick="ask('Explain Asymptomatic heart condition')">🔕 Asymptomatic</div>
-  </div>
-  <div class="chips" style="margin-top:4px;">
-    <div class="chip chip-term" onclick="ask('What is a Normal ECG result?')">✅ Normal ECG</div>
-    <div class="chip chip-term" onclick="ask('Explain ST-T Wave Abnormality on ECG')">⚠️ ST-T Abnormality</div>
-    <div class="chip chip-term" onclick="ask('Explain LV Hypertrophy on ECG')">🫶 LV Hypertrophy</div>
-    <div class="chip chip-term" onclick="ask('Explain Upsloping ST segment')">📈 Upsloping</div>
-    <div class="chip chip-term" onclick="ask('Explain Flat ST segment')">➖ Flat ST</div>
-    <div class="chip chip-term" onclick="ask('Explain Downsloping ST segment')">📉 Downsloping</div>
   </div>
 
   <!-- Chat -->
@@ -593,12 +603,7 @@ const micBtn  = document.getElementById('micBtn');
 const chatBox = document.getElementById('chatBox');
 
 let recog=null, isListening=false;
-const langMap={{
-  'en-US':'English','hi-IN':'Hindi','kn-IN':'Kannada',
-  'ta-IN':'Tamil','te-IN':'Telugu','ml-IN':'Malayalam',
-  'fr-FR':'French','es-ES':'Spanish','ar-SA':'Arabic',
-  'ja-JP':'Japanese','zh-CN':'Chinese'
-}};
+const langMap={{'en-US':'English','hi-IN':'Hindi','kn-IN':'Kannada','ta-IN':'Tamil','te-IN':'Telugu','ml-IN':'Malayalam'}};
 
 // ─── State helpers ────────────────────────────────────────
 function setState(s,txt){{
@@ -617,7 +622,7 @@ function startListen(){{
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){{ addMsg('alex','Voice input is not supported in this browser. Please type your question instead.'); return; }}
   recog=new SR();
-  recog.lang=document.getElementById('langSel').value;
+  recog.lang='en-US';
   recog.interimResults=false; recog.maxAlternatives=1;
   recog.onstart=()=>{{ isListening=true; setState('listening','Listening — speak now...'); }};
   recog.onresult=e=>{{ stopListen(); handleQ(e.results[0][0].transcript); }};
@@ -651,10 +656,10 @@ async function handleQ(q){{
   
   const key=document.getElementById('apiKey').value.trim();
   let reply='';
-  const lang=langMap[document.getElementById('langSel').value]||'English';
   
   if(key){{
     try{{
+      const lang='English';
       const r=await fetch('https://api.anthropic.com/v1/messages',{{
         method:'POST',
         headers:{{
@@ -665,162 +670,47 @@ async function handleQ(q){{
         }},
         body:JSON.stringify({{
           model:'claude-sonnet-4-20250514',
-          max_tokens:350,
-          system:`You are Alex, a warm AI cardiac health assistant for the CardioAI app. 
-Respond ONLY in ${{lang}} language (translate your entire answer including medical terms into ${{lang}}).
-Be concise (2-3 sentences for voice), caring, and medically accurate.
-For medical terminology questions (Exercise Angina, ST Depression, Typical Angina, Atypical Angina, Non-anginal Pain, Asymptomatic, ST-T Abnormality, LV Hypertrophy, Upsloping, Flat, Downsloping), give a clear patient-friendly explanation of what it means, why it matters for heart health, and what the person should do.
-Always gently recommend seeing a cardiologist for serious concerns.`,
+          max_tokens:300,
+          system:`You are Alex, a friendly and warm AI cardiac health assistant. Respond in ${{lang}} language. Be concise (under 3 sentences for voice), caring, and medically accurate. Gently recommend seeing a cardiologist for any serious concerns.`,
           messages:[{{role:'user',content:q}}]
         }})
       }});
       const data=await r.json();
-      reply=data.content?.[0]?.text||fallback(q,lang);
-    }}catch{{reply=fallback(q,lang);}}
+      reply=data.content?.[0]?.text||fallback(q);
+    }}catch{{reply=fallback(q);}}
   }} else {{
     await new Promise(r=>setTimeout(r,700));
-    reply=fallback(q,lang);
+    reply=fallback(q);
   }}
   
   addMsg('alex',reply);
   speakOut(reply);
 }}
 
-// ─── Multi-language fallback ─────────────────────────────
-function fallback(q,lang){{
+// ─── Rule-based fallback ──────────────────────────────────
+function fallback(q){{
   q=q.toLowerCase();
-  const isHi=lang==='Hindi', isKn=lang==='Kannada', isTa=lang==='Tamil',
-        isTe=lang==='Telugu', isMl=lang==='Malayalam', isFr=lang==='French',
-        isEs=lang==='Spanish', isAr=lang==='Arabic', isJa=lang==='Japanese', isZh=lang==='Chinese';
-
-  // ── Medical term explanations with translations ─────────
-  if(q.match(/exercise angina|exercise.induced angina/)){{
-    if(isHi) return"व्यायाम एनजाइना तब होता है जब व्यायाम के दौरान हृदय को पर्याप्त रक्त नहीं मिलता, जिससे सीने में दर्द होता है। यह कोरोनरी धमनी रोग का संकेत हो सकता है। कृपया हृदय रोग विशेषज्ञ से परामर्श लें।";
-    if(isKn) return"ವ್ಯಾಯಾಮ ಆಂಜಿನಾ ಎಂದರೆ ವ್ಯಾಯಾಮ ಸಮಯದಲ್ಲಿ ಹೃದಯಕ್ಕೆ ಸಾಕಷ್ಟು ರಕ್ತ ಸಿಗದಿದ್ದಾಗ ಎದೆನೋವು ಉಂಟಾಗುತ್ತದೆ. ಇದು ಕಾರ್ಡಿಯಾಕ್ ಸ್ಥಿತಿಯ ಸಂಕೇತ.";
-    if(isTa) return"உடற்பயிற்சி ஆஞ்சினா என்பது உடற்பயிற்சியின்போது இதயத்திற்கு போதுமான இரத்தம் கிடைக்காதபோது மார்பு வலி ஏற்படுவதாகும். இது கரோனரி தமனி நோயின் அறிகுறியாக இருக்கலாம்.";
-    if(isTe) return"వ్యాయామ ఆంజినా అంటే వ్యాయామం సమయంలో గుండెకు తగినంత రక్తం అందకపోవడం వల్ల ఛాతీ నొప్పి వస్తుంది. ఇది కరోనరీ ఆర్టరీ వ్యాధికి సంకేతం కావచ్చు.";
-    if(isMl) return"വ്യായാമ ആൻജൈന എന്നത് വ്യായാമ സമയത്ത് ഹൃദയത്തിന് ആവശ്യത്തിന് രക്തം ലഭിക്കാതിരിക്കുമ്പോൾ ഉണ്ടാകുന്ന നെഞ്ചുവേദനയാണ്. ഇത് കൊറോണറി ആർട്ടറി രോഗത്തിന്റെ സൂചനയാകാം.";
-    if(isFr) return"L'angine d'effort survient quand le cœur manque de sang pendant l'exercice, causant une douleur thoracique. C'est souvent un signe de maladie coronarienne. Consultez un cardiologue.";
-    if(isEs) return"La angina de esfuerzo ocurre cuando el corazón no recibe suficiente sangre durante el ejercicio, causando dolor en el pecho. Puede ser señal de enfermedad coronaria. Consulte a un cardiólogo.";
-    if(isAr) return"ذبحة صدرية التمرين تحدث عندما لا يحصل القلب على دم كافٍ أثناء التمرين مما يسبب ألماً في الصدر. قد تكون علامة على مرض الشريان التاجي.";
-    if(isJa) return"労作性狭心症とは、運動中に心臓への血流が不足して胸痛が起こる症状です。冠動脈疾患のサインである可能性があります。心臓専門医に相談してください。";
-    if(isZh) return"劳力性心绞痛是指运动时心脏供血不足引起的胸痛。这可能是冠状动脉疾病的信号，请咨询心脏病专科医生。";
-    return"Exercise Angina means chest pain or discomfort that occurs during physical activity because the heart muscle isn't getting enough blood. It's often a sign of narrowed coronary arteries (coronary artery disease). Always report exercise-induced chest pain to your cardiologist immediately.";
-  }}
-
-  if(q.match(/st depression|st.t depression/)){{
-    if(isHi) return"ST डिप्रेशन ECG में एक असामान्यता है जो दिखाती है कि हृदय की मांसपेशी को पर्याप्त ऑक्सीजन नहीं मिल रही। यह इस्केमिया का संकेत हो सकता है।";
-    if(isFr) return"La dépression ST sur un ECG indique que le muscle cardiaque reçoit moins d'oxygène. Une valeur supérieure à 2mm est cliniquement significative et peut indiquer une ischémie cardiaque.";
-    if(isEs) return"La depresión del ST en el ECG indica que el músculo cardíaco recibe menos oxígeno de lo normal. Un valor mayor a 2mm es clínicamente significativo e indica posible isquemia.";
-    if(isAr) return"انخفاض ST على تخطيط القلب يشير إلى نقص الأكسجين في عضلة القلب. القيم أعلى من 2 ملم تعتبر مهمة سريرياً وقد تشير إلى نقص تروية القلب.";
-    if(isJa) return"ST低下はECG上の異常で、心筋への酸素供給が不足していることを示します。2mm以上の低下は臨床的に重要で、心筋虚血の可能性があります。";
-    if(isZh) return"ST段压低是心电图上的异常，表明心肌供氧不足。超过2毫米的压低具有临床意义，可能提示心肌缺血。";
-    return"ST Depression on an ECG (oldpeak value) measures how much the ST segment drops below the baseline during exercise stress testing. Values above 1-2mm indicate the heart muscle isn't receiving enough oxygen — a strong predictor of coronary artery disease. Higher values carry greater cardiac risk.";
-  }}
-
-  if(q.match(/typical angina/)){{
-    if(isHi) return"विशिष्ट एनजाइना सीने में दबाव या दर्द की क्लासिक अनुभूति है जो परिश्रम से बढ़ती है और आराम से कम होती है। यह कोरोनरी धमनी रोग का सबसे स्पष्ट संकेत है।";
-    if(isFr) return"L'angine typique est une douleur thoracique classique — pression ou oppression — déclenchée par l'effort et soulagée au repos. C'est le signe le plus clair d'une maladie coronarienne.";
-    if(isEs) return"La angina típica es el dolor clásico del pecho — presión u opresión — desencadenado por el esfuerzo y aliviado con el reposo. Es la señal más clara de enfermedad coronaria.";
-    return"Typical Angina is the classic chest pain — pressure, tightness or squeezing in the chest — triggered by physical exertion or emotional stress and relieved by rest or nitroglycerin. It has 3 features: substernal discomfort, provoked by exertion, relieved by rest. It strongly suggests coronary artery disease.";
-  }}
-
-  if(q.match(/atypical angina/)){{
-    if(isHi) return"असामान्य एनजाइना में सीने में दर्द के विशिष्ट लक्षण नहीं होते। दर्द कंधे, जबड़े या पीठ में हो सकता है। यह महिलाओं में अधिक आम है।";
-    if(isFr) return"L'angine atypique n'a que 1-2 des caractéristiques classiques. La douleur peut irradier vers l'épaule, la mâchoire ou le dos. Elle est plus fréquente chez les femmes et les diabétiques.";
-    if(isEs) return"La angina atípica solo tiene 1-2 de las características clásicas. El dolor puede irradiarse al hombro, mandíbula o espalda. Es más común en mujeres y diabéticos.";
-    return"Atypical Angina has only 1-2 of the classic angina features. The discomfort may be in the shoulder, jaw, arm, or back instead of the chest — or may feel like indigestion. It's more common in women, diabetics, and elderly patients. Still needs cardiac evaluation.";
-  }}
-
-  if(q.match(/non.anginal|non anginal/)){{
-    if(isHi) return"गैर-एनजाइनल दर्द सीने में दर्द है जो हृदय से संबंधित नहीं है। यह मांसपेशियों, पाचन या चिंता के कारण हो सकता है, लेकिन सुनिश्चित करने के लिए जांच जरूरी है।";
-    if(isFr) return"La douleur non-angineuse est une douleur thoracique qui ne provient pas du cœur — elle peut venir des muscles, de l'œsophage ou du stress. Mais une évaluation cardiaque est toujours recommandée.";
-    return"Non-anginal Pain is chest discomfort that doesn't fit the pattern of cardiac angina. It may come from muscles, esophagus, ribs, or anxiety. It has none of the classic angina features. Lower cardiac risk, but still important to evaluate with a doctor to rule out heart disease.";
-  }}
-
-  if(q.match(/asymptomatic/)){{
-    if(isHi) return"असिम्प्टोमेटिक का मतलब है कोई लक्षण नहीं। दिल की बीमारी में यह खतरनाक हो सकता है क्योंकि कुछ लोगों को हार्ट अटैक से पहले कोई दर्द नहीं होता।";
-    if(isFr) return"Asymptomatique signifie sans symptômes. Paradoxalement, les maladies cardiaques asymptomatiques peuvent être les plus dangereuses car elles progressent sans avertissement. Un dépistage régulier est crucial.";
-    if(isEs) return"Asintomático significa sin síntomas. Paradójicamente, la enfermedad cardíaca asintomática puede ser la más peligrosa porque progresa sin advertencia. El chequeo regular es crucial.";
-    return"Asymptomatic means having no symptoms — no chest pain, no shortness of breath. Paradoxically, it can be most dangerous in heart disease, as silent heart attacks occur without warning. 'Silent ischemia' is common in diabetics and elderly. Regular screening and check-ups are essential.";
-  }}
-
-  if(q.match(/normal ecg|normal result/)){{
-    if(isHi) return"सामान्य ECG का मतलब है हृदय की विद्युत गतिविधि सही है। कोई असामान्यता नहीं पाई गई। यह एक अच्छा संकेत है लेकिन वार्षिक जांच जारी रखें।";
-    if(isFr) return"Un ECG normal signifie que l'activité électrique du cœur est normale — pas d'arythmie, pas d'ischémie détectable. C'est bon signe, mais continuez les contrôles annuels.";
-    return"A Normal ECG means the heart's electrical activity follows the expected pattern — normal P waves, QRS complexes, and T waves with proper timing. No ischemia, arrhythmia, or structural abnormalities detected. This is reassuring, but annual check-ups are still recommended.";
-  }}
-
-  if(q.match(/st.t abnormality|st.t wave/)){{
-    if(isHi) return"ST-T तरंग असामान्यता ECG पर एक असामान्यता है जो हृदय की मांसपेशी में ऑक्सीजन की कमी दिखाती है। यह कोरोनरी रोग, उच्च रक्तचाप या दवाओं के प्रभाव से हो सकता है।";
-    if(isFr) return"L'anomalie de l'onde ST-T sur l'ECG indique une repolarisation anormale du cœur. Elle peut être due à l'ischémie, l'hypertension ou certains médicaments. Une évaluation cardiologique est nécessaire.";
-    if(isEs) return"La anomalía de la onda ST-T en el ECG indica una repolarización anormal del corazón. Puede deberse a isquemia, hipertensión o medicamentos. Se necesita evaluación cardiológica.";
-    return"ST-T Wave Abnormality on ECG means the repolarization phase of the heart is irregular. This can indicate cardiac ischemia (reduced blood flow), left ventricular hypertrophy, electrolyte imbalances, or medication effects. It increases cardiac risk significantly and requires cardiologist evaluation.";
-  }}
-
-  if(q.match(/lv hypertrophy|left ventricular/)){{
-    if(isHi) return"LV हाइपरट्रॉफी का मतलब है हृदय के बाएं कक्ष की दीवार मोटी हो गई है। यह उच्च रक्तचाप के कारण होता है और हृदय रोग का खतरा बढ़ाता है।";
-    if(isFr) return"L'hypertrophie ventriculaire gauche (HVG) signifie que le muscle du ventricule gauche s'est épaissi, souvent à cause de l'hypertension. Elle augmente le risque d'insuffisance cardiaque.";
-    if(isEs) return"La hipertrofia ventricular izquierda (HVI) significa que el músculo del ventrículo izquierdo se ha engrosado, generalmente por hipertensión. Aumenta el riesgo de insuficiencia cardíaca.";
-    return"LV Hypertrophy (Left Ventricular Hypertrophy) means the heart muscle on the left side has thickened — like a muscle that's been overworked. It's usually caused by long-standing hypertension. It increases the risk of heart failure, arrhythmias, and sudden cardiac death. Blood pressure control is critical.";
-  }}
-
-  if(q.match(/upsloping|up.sloping/)){{
-    if(isHi) return"अपस्लोपिंग ST सेगमेंट का मतलब है ECG में ST रेखा ऊपर की ओर झुकी है। यह अपेक्षाकृत कम जोखिम वाला संकेत है लेकिन निगरानी की आवश्यकता है।";
-    if(isFr) return"Un segment ST ascendant (upsloping) est le moins préoccupant des changements ST. Il indique un risque cardiaque modéré et nécessite une surveillance, mais est moins grave que plat ou descendant.";
-    return"Upsloping ST segment means the ST segment on the ECG slopes upward — this is the least concerning of the three ST slope patterns. It represents moderate cardiac risk. Often seen in early or mild coronary artery disease. Requires monitoring but is generally less dangerous than flat or downsloping.";
-  }}
-
-  if(q.match(/flat st|flat.slope/)){{
-    if(isHi) return"फ्लैट ST सेगमेंट हृदय रोग का मध्यम जोखिम दर्शाता है। यह इस्केमिया का संकेत हो सकता है और हृदय रोग विशेषज्ञ से जांच जरूरी है।";
-    if(isFr) return"Un segment ST plat (flat) indique un risque cardiaque intermédiaire à élevé. C'est souvent associé à l'ischémie et nécessite une évaluation cardiologique approfondie.";
-    return"Flat ST segment means the ST segment lies horizontally on the ECG — intermediate to high cardiac risk. It's often associated with myocardial ischemia and coronary artery disease. More concerning than upsloping. Requires thorough cardiologist evaluation and possibly a stress test.";
-  }}
-
-  if(q.match(/downsloping|down.sloping/)){{
-    if(isHi) return"डाउनस्लोपिंग ST सेगमेंट तीनों में सबसे गंभीर है। यह गंभीर इस्केमिया का संकेत है और तत्काल हृदय रोग विशेषज्ञ से मिलना जरूरी है।";
-    if(isFr) return"Un segment ST descendant (downsloping) est le plus préoccupant des trois types. Il est fortement associé à une ischémie sévère et une maladie coronarienne grave. Consultation urgente recommandée.";
-    if(isEs) return"El segmento ST descendente (downsloping) es el más preocupante de los tres tipos. Está fuertemente asociado con isquemia severa y enfermedad coronaria grave. Se recomienda consulta urgente.";
-    return"Downsloping ST segment is the most serious of the three ST slope patterns — highest cardiac risk. It's strongly associated with severe myocardial ischemia and significant coronary artery disease. If you have downsloping ST changes, consult a cardiologist urgently for further evaluation.";
-  }}
-
-  // ── General health fallback ────────────────────────────
-  if(q.match(/symptom|sign|feel|ache|chest pain/)){{
-    if(isHi) return"हृदय रोग के सामान्य लक्षण: सीने में दर्द, सांस लेने में तकलीफ, थकान, धड़कन, चक्कर और पैरों में सूजन। ये लक्षण होने पर तुरंत डॉक्टर से मिलें।";
-    if(isKn) return"ಹೃದಯ ರೋಗದ ಸಾಮಾನ್ಯ ಲಕ್ಷಣಗಳು: ಎದೆ ನೋವು, ಉಸಿರಾಟದ ತೊಂದರೆ, ಆಯಾಸ, ಮತ್ತು ಕಾಲಿನ ಊತ. ಈ ಲಕ್ಷಣಗಳಿದ್ದರೆ ತಕ್ಷಣ ವೈದ್ಯರನ್ನು ಕಾಣಿ.";
-    if(isFr) return"Symptômes cardiaques courants: douleur thoracique, essoufflement, fatigue, palpitations, vertiges, gonflement des jambes. Consultez immédiatement si vous les ressentez.";
-    if(isEs) return"Síntomas cardíacos comunes: dolor en el pecho, dificultad para respirar, fatiga, palpitaciones, mareos, hinchazón en las piernas. Consulte inmediatamente si los experimenta.";
-    if(isAr) return"أعراض أمراض القلب الشائعة: ألم الصدر، ضيق التنفس، التعب، الخفقان، الدوخة، وتورم الساقين. استشر الطبيب فوراً إذا شعرت بهذه الأعراض.";
-    if(isJa) return"心臓病の一般的な症状：胸痛、息切れ、疲労感、動悸、めまい、脚のむくみ。これらの症状があればすぐに医師に相談してください。";
-    if(isZh) return"心脏病常见症状：胸痛、呼吸困难、疲劳、心悸、头晕和腿部肿胀。如有这些症状请立即就医。";
+  if(q.match(/symptom|sign|feel|ache|chest pain/))
     return"Common heart disease symptoms: chest pain or tightness, shortness of breath, fatigue, palpitations, dizziness, and swelling in legs. Please see a cardiologist if you experience these.";
-  }}
-  if(q.match(/cholesterol|diet|food|eat/)){{
-    if(isFr) return"Pour réduire le cholestérol: mangez des flocons d'avoine, des noix et des acides gras oméga-3; évitez les graisses trans et la viande rouge. L'exercice régulier aide beaucoup.";
-    if(isEs) return"Para reducir el colesterol: coma avena, nueces y ácidos grasos omega-3; evite las grasas trans y la carne roja. El ejercicio regular y no fumar también ayudan significativamente.";
-    if(isHi) return"कोलेस्ट्रॉल कम करने के लिए: जई, मेवे और ओमेगा-3 खाएं; ट्रांस फैट और लाल मांस से बचें। नियमित व्यायाम और धूम्रपान न करना भी बहुत मदद करता है।";
+  if(q.match(/cholesterol|diet|food|eat/))
     return"To lower cholesterol: eat oats, nuts, and omega-3 fatty acids; avoid trans fats and red meat. Regular exercise and not smoking also help significantly.";
-  }}
-  if(q.match(/blood pressure|bp|hypertension/)){{
-    if(isFr) return"La tension normale est inférieure à 120/80 mmHg. Réduisez le sel, faites de l'exercice, évitez de fumer, gérez le stress et prenez vos médicaments prescrits.";
-    if(isEs) return"La presión normal es inferior a 120/80 mmHg. Reduzca la sal, haga ejercicio, evite fumar, controle el estrés y tome los medicamentos recetados.";
-    if(isHi) return"सामान्य BP 120/80 mmHg से कम होना चाहिए। नमक कम करें, रोज व्यायाम करें, धूम्रपान छोड़ें, तनाव प्रबंधन करें और दवाएं नियमित लें।";
+  if(q.match(/blood pressure|bp|hypertension/))
     return"Normal BP is below 120/80 mmHg. Reduce salt, exercise daily, avoid smoking, manage stress, and take prescribed medications to control high blood pressure.";
-  }}
-  if(q.match(/ecg|electrocardiogram|heart rate|ekg/)){{
-    if(isFr) return"Un ECG enregistre l'activité électrique du cœur. Les anomalies ST-T peuvent indiquer une ischémie. Faites toujours interpréter votre ECG par un cardiologue.";
+  if(q.match(/ecg|electrocardiogram|heart rate|ekg/))
     return"An ECG records the heart's electrical activity. ST-T wave changes may indicate ischemia. Always have your ECG interpreted by a cardiologist for accurate diagnosis.";
-  }}
-  if(q.match(/hospital|emergency|ambulance|112/)){{
-    if(isHi) return"हृदय संबंधी आपात स्थिति में तुरंत 112 पर कॉल करें। आप ऐप के 'नज़दीकी अस्पताल' सेक्शन में पास के हृदय अस्पताल भी देख सकते हैं।";
+  if(q.match(/exercise|workout|physical|sport/))
+    return"30 minutes of moderate aerobic exercise 5 days a week is great for heart health. Start gradually. If you have an existing condition, consult your doctor first.";
+  if(q.match(/stress|anxiet|mental|relax/))
+    return"Chronic stress raises cortisol, increasing BP and heart disease risk. Try deep breathing, meditation, regular sleep, and talking to a counselor if stress is severe.";
+  if(q.match(/smok|tobacco|cigarette/))
+    return"Smoking doubles heart disease risk. Even light smoking is harmful. Quitting significantly reduces risk within just one year. Ask your doctor about cessation aids.";
+  if(q.match(/hospital|emergency|ambulance|112/))
     return"For cardiac emergencies in India, call 112 immediately. You can also find nearby cardiac hospitals in the Hospitals Near Me section of this app.";
-  }}
-  if(q.match(/tips?|health|prevent|protect/)){{
-    if(isFr) return"Conseils pour la santé cardiaque: exercice régulier, alimentation saine, arrêt du tabac, limitation de l'alcool, gestion du stress, contrôle de la tension et du cholestérol.";
-    if(isEs) return"Consejos para la salud cardíaca: ejercicio regular, dieta saludable, dejar de fumar, limitar el alcohol, controlar el estrés, y controlar la presión y el colesterol.";
+  if(q.match(/doctor|consult|when.*see/))
+    return"See a cardiologist if you have: chest pain, shortness of breath at rest, palpitations, family history of heart disease, or if your prediction score is above 60%.";
+  if(q.match(/tips?|health|prevent|protect/))
     return"Top heart health tips: exercise regularly, eat a heart-healthy diet, quit smoking, limit alcohol, manage stress, control BP & cholesterol, and get regular check-ups.";
-  }}
-  return"Hello! I'm Alex, your AI cardiac health assistant. Ask me about heart disease symptoms, cholesterol, blood pressure, or click any Medical Term chip above to hear a voice explanation. I support 11 languages!";
+  return"Hello! I'm Alex, your AI cardiac health assistant. Ask me about heart disease symptoms, cholesterol, blood pressure, medications, or anything heart-related. I'm here to help!";
 }}
 
 // ─── Speech synthesis ─────────────────────────────────────
@@ -828,7 +718,7 @@ function speakOut(text){{
   if(!window.speechSynthesis){{ setState('','Done'); return; }}
   setState('speaking','Alex is speaking...');
   const u=new SpeechSynthesisUtterance(text);
-  u.lang=document.getElementById('langSel').value;
+  u.lang='en-US';
   u.rate=.95; u.pitch=1.1;
   const voices=speechSynthesis.getVoices();
   const lc=u.lang.split('-')[0];
@@ -922,36 +812,6 @@ window.addEventListener('resize',()=>{renderer.setSize(window.innerWidth,window.
 
 
 # ═════════════════════════════════════════════════════════════
-#  TOP NAVIGATION BAR
-# ═════════════════════════════════════════════════════════════
-def render_top_nav():
-    """Horizontal pill navigation bar shown on every authenticated page."""
-    if not st.session_state.logged_in:
-        return
-    pages = [
-        ("home",      T("nav_home")),
-        ("prediction",T("nav_predict")),
-        ("voice",     T("nav_voice")),
-        ("terms",     "📖 Medical Terms"),
-        ("doctors",   T("nav_doctors")),
-        ("hospitals", T("nav_hospitals")),
-        ("about",     T("nav_about")),
-    ]
-    cur = st.session_state.page
-    # Build one-row nav with columns
-    cols = st.columns(len(pages))
-    for col, (pk, lbl) in zip(cols, pages):
-        active = cur == pk
-        with col:
-            label_with_mark = f"▸ {lbl}" if active else lbl
-            if st.button(label_with_mark, key=f"topnav_{pk}", use_container_width=True):
-                st.session_state.page = pk
-                st.rerun()
-    st.markdown("<hr style='border-color:rgba(255,255,255,.06);margin:6px 0 22px;'>",
-                unsafe_allow_html=True)
-
-
-# ═════════════════════════════════════════════════════════════
 #  PAGE: LOGIN
 # ═════════════════════════════════════════════════════════════
 def page_login():
@@ -989,7 +849,6 @@ Demo: <b>admin/admin123</b> &nbsp;|&nbsp; <b>doctor/doc2024</b> &nbsp;|&nbsp; <b
 #  PAGE: HOME
 # ═════════════════════════════════════════════════════════════
 def page_home():
-    render_top_nav()
     uname = USERS.get(st.session_state.username, {}).get("name", "User")
     st.markdown(f'<div class="ptitle">❤️ {T("title")}</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="psub">{T("welcome")}, <b>{uname}</b> — {datetime.now().strftime("%A, %d %B %Y")}</div>', unsafe_allow_html=True)
@@ -1031,7 +890,6 @@ Always consult a qualified cardiologist for clinical evaluation.
 #  PAGE: PREDICTION
 # ═════════════════════════════════════════════════════════════
 def page_prediction():
-    render_top_nav()
     st.markdown(f'<div class="ptitle">🔬 {T("title")}</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="psub">{T("subtitle")}</div>', unsafe_allow_html=True)
 
@@ -1090,10 +948,8 @@ def page_prediction():
             # gTTS speak
             if HAS_GTTS:
                 if st.button("🔊 Speak Result"):
-                    lm = {"en":"en","hi":"hi","kn":"kn","ta":"ta","te":"te","ml":"ml"}
-                    lc = lm.get(st.session_state.language,"en")
                     txt = f"Heart disease detected with {pct} percent risk." if pred==1 else f"No heart disease detected. Healthy with {100-pct} percent safe score."
-                    buf = BytesIO(); gTTS(text=txt,lang=lc,slow=False).write_to_fp(buf); buf.seek(0)
+                    buf = BytesIO(); gTTS(text=txt,lang="en",slow=False).write_to_fp(buf); buf.seek(0)
                     st.audio(buf,format="audio/mp3",autoplay=True)
 
         with r2:
@@ -1124,29 +980,28 @@ def page_prediction():
 #  PAGE: ALEX VOICE ASSISTANT
 # ═════════════════════════════════════════════════════════════
 def page_voice():
-    render_top_nav()
     st.markdown('<div class="ptitle">🎙️ Alex – AI Voice Assistant</div>', unsafe_allow_html=True)
-    st.markdown('<div class="psub">Siri-like voice AI for cardiac health — speak, listen, and get answers in 11 languages</div>', unsafe_allow_html=True)
+    st.markdown('<div class="psub">Siri-like voice AI for cardiac health — speak, listen, and get answers in English</div>', unsafe_allow_html=True)
 
-    lang_bcp = {"en":"en-US","hi":"hi-IN","kn":"kn-IN","ta":"ta-IN","te":"te-IN","ml":"ml-IN"}.get(st.session_state.language,"en-US")
+    lang_bcp = "en-US"
     api_key  = st.sidebar.text_input("🔑 Anthropic API Key (for live AI)", type="password", help="Enter your Anthropic key. Without it, Alex uses built-in responses.")
 
     st.markdown("""
 <div style="background:rgba(123,47,247,.12);border:1px solid rgba(123,47,247,.3);
 border-radius:14px;padding:12px 18px;font-size:13px;color:rgba(200,200,240,.8);margin-bottom:16px;">
-💡 <b>How to use Alex:</b> Select a language (🇬🇧 🇮🇳 🇫🇷 🇪🇸 🇸🇦 🇯🇵 🇨🇳 and more), then click the glowing orb OR tap 🎤 to speak.
-Click any <span style="color:#b085ff;">purple Medical Term chip</span> to hear an instant voice explanation in your language.
-Add your Anthropic API key (sidebar) for deeper live AI answers.
+💡 <b>How to use Alex:</b> Click the glowing orb OR tap 🎤 to speak.
+Your browser will ask for microphone permission — allow it.
+Alex will reply in English voice.
+Add your Anthropic API key (sidebar) for live AI answers.
 </div>""", unsafe_allow_html=True)
 
-    alex_siri_component(height=820, api_key=api_key, lang_bcp=lang_bcp)
+    alex_siri_component(height=720, api_key=api_key, lang_bcp=lang_bcp)
 
 
 # ═════════════════════════════════════════════════════════════
 #  PAGE: DOCTORS
 # ═════════════════════════════════════════════════════════════
 def page_doctors():
-    render_top_nav()
     st.markdown('<div class="ptitle">👨‍⚕️ Our Medical Team</div>', unsafe_allow_html=True)
     st.markdown('<div class="psub">Top cardiologists in Bangalore — verified specialists</div>', unsafe_allow_html=True)
 
@@ -1183,7 +1038,6 @@ def page_doctors():
 #  PAGE: HOSPITALS
 # ═════════════════════════════════════════════════════════════
 def page_hospitals():
-    render_top_nav()
     st.markdown('<div class="ptitle">🏥 Hospitals Near You</div>', unsafe_allow_html=True)
     st.markdown('<div class="psub">Cardiac hospitals in Bangalore — live map & contacts</div>', unsafe_allow_html=True)
 
@@ -1258,7 +1112,6 @@ function geo(){
 #  PAGE: ABOUT
 # ═════════════════════════════════════════════════════════════
 def page_about():
-    render_top_nav()
     st.markdown('<div class="ptitle">ℹ️ About CardioAI</div>', unsafe_allow_html=True)
     st.markdown('<div class="psub">Empowering early cardiac detection through AI</div>', unsafe_allow_html=True)
     c1,c2 = st.columns([1.2,1])
@@ -1270,12 +1123,12 @@ def page_about():
 <h3 style="color:#e8294c;margin:18px 0 10px;">🔬 The Technology</h3>
 <p>Our ensemble model (Random Forest + Gradient Boosting) is trained on the UCI Heart Disease Dataset — validated at <b>96.7% accuracy</b>. It analyses 11 clinical biomarkers including ECG patterns, cholesterol, blood pressure, and exercise stress results.</p>
 <h3 style="color:#e8294c;margin:18px 0 10px;">🎙️ Alex — Voice AI</h3>
-<p>Alex is powered by Claude (Anthropic) and supports <b>11 languages</b>: English, Hindi, Kannada, Tamil, Telugu, Malayalam, French, Spanish, Arabic, Japanese, and Chinese — with full voice synthesis via Web Speech API and gTTS.</p>
+<p>Alex is powered by Claude (Anthropic) and operates in <b>English</b> with full voice synthesis via Web Speech API and gTTS.</p>
 </div>""", unsafe_allow_html=True)
     with c2:
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.markdown("**📊 Platform Stats**")
-        for lbl,val in [("🔬 AI Accuracy","96.7%"),("🌍 Languages","11"),("👨‍⚕️ Partner Doctors","6+"),("🏥 Hospitals","8+"),("📱 Platform","Web, Mobile"),("🔒 Privacy","HIPAA-aligned")]:
+        for lbl,val in [("🔬 AI Accuracy","96.7%"),("🌍 Language","English"),("👨‍⚕️ Partner Doctors","6+"),("🏥 Hospitals","8+"),("📱 Platform","Web, Mobile"),("🔒 Privacy","HIPAA-aligned")]:
             st.markdown(f'<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:14px;"><span style="color:rgba(200,200,230,.7);">{lbl}</span><span style="color:#e8294c;font-weight:700;">{val}</span></div>', unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("#### 📬 Contact Us")
@@ -1291,140 +1144,80 @@ def page_about():
 
 
 # ═════════════════════════════════════════════════════════════
-#  PAGE: MEDICAL TERMS GLOSSARY WITH VOICE
+#  PAGE: ADMIN DASHBOARD
 # ═════════════════════════════════════════════════════════════
-def page_medical_terms():
-    render_top_nav()
-    st.markdown('<div class="ptitle">📖 Medical Terms Explained</div>', unsafe_allow_html=True)
-    st.markdown('<div class="psub">Understand every term in your heart health report — with voice in 11 languages</div>', unsafe_allow_html=True)
+def page_admin():
+    st.markdown('<div class="ptitle">🛡️ Admin Dashboard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="psub">System overview — CardioAI platform management</div>', unsafe_allow_html=True)
 
-    lang_bcp = {"en":"en-US","hi":"hi-IN","kn":"kn-IN","ta":"ta-IN","te":"te-IN","ml":"ml-IN"}.get(st.session_state.language,"en-US")
-    api_key  = st.sidebar.text_input("🔑 Anthropic API Key (for live AI voice)", type="password", key="terms_key", help="Optional: enables live AI explanations in any language")
-
-    st.markdown("""
-<div style="background:rgba(123,47,247,.12);border:1px solid rgba(123,47,247,.3);
-border-radius:14px;padding:12px 18px;font-size:13px;color:rgba(200,200,240,.8);margin-bottom:20px;">
-💡 <b>How to use:</b> Select your language from the voice component below, then click any term card's 🔊 button — Alex will read the explanation aloud in your chosen language.
-With an Anthropic API key, you get deeper AI-powered explanations.
-</div>""", unsafe_allow_html=True)
-
-    # ── Two-column term cards ──────────────────────────────────
-    TERMS = [
-        {
-            "icon":"🏃", "term":"Exercise Angina", "cat":"Chest Pain Type",
-            "short":"Chest pain during physical activity due to reduced blood flow",
-            "detail":"Exercise-Induced Angina means your heart muscle doesn't receive enough oxygenated blood during physical exertion. This triggers chest tightness or pressure that typically disappears with rest. It's a key indicator of coronary artery blockage and carries significant cardiac risk.",
-            "risk":"High", "color":"#e8294c",
-            "voice_q":"Explain Exercise Angina in simple terms for a cardiac patient",
-        },
-        {
-            "icon":"📉", "term":"ST Depression", "cat":"ST Parameter",
-            "short":"ECG sign showing heart muscle getting insufficient oxygen",
-            "detail":"The oldpeak value on your report represents ST segment depression — how far the ST segment dips below baseline on the ECG during a stress test. Values > 1mm suggest ischemia; > 2mm is clinically significant and strongly associated with coronary artery disease.",
-            "risk":"High", "color":"#e8294c",
-            "voice_q":"Explain ST Depression on an ECG in simple language",
-        },
-        {
-            "icon":"💔", "term":"Typical Angina", "cat":"Chest Pain Type",
-            "short":"Classic heart chest pain with all 3 defining features",
-            "detail":"Typical Angina has all three hallmarks: (1) substernal chest pressure/tightness, (2) triggered by exertion or emotional stress, (3) relieved by rest or nitroglycerin within minutes. This pattern has the highest predictive value for significant coronary artery disease.",
-            "risk":"High", "color":"#e8294c",
-            "voice_q":"Explain Typical Angina chest pain in simple terms",
-        },
-        {
-            "icon":"💛", "term":"Atypical Angina", "cat":"Chest Pain Type",
-            "short":"Chest discomfort with only 1-2 classic angina features",
-            "detail":"Atypical Angina has only 1-2 of the three classic angina features. Pain may radiate to the jaw, arm, or back, or feel like indigestion. More common in women, diabetics, and elderly. Still warrants cardiac investigation as it can represent real coronary disease.",
-            "risk":"Medium", "color":"#ffd740",
-            "voice_q":"Explain Atypical Angina and how it differs from Typical Angina",
-        },
-        {
-            "icon":"🫀", "term":"Non-anginal Pain", "cat":"Chest Pain Type",
-            "short":"Chest pain not originating from the heart",
-            "detail":"Non-anginal Pain meets none of the three angina criteria. It's usually from non-cardiac causes: musculoskeletal, gastrointestinal (GERD), or anxiety/panic. While lower cardiac risk, a full cardiac work-up is still recommended to safely exclude heart disease.",
-            "risk":"Low–Medium", "color":"#69f0ae",
-            "voice_q":"Explain Non-anginal Chest Pain — what is it and what causes it",
-        },
-        {
-            "icon":"🔕", "term":"Asymptomatic", "cat":"Chest Pain Type",
-            "short":"No chest symptoms — but silent heart disease can still be present",
-            "detail":"Asymptomatic means you have no chest pain, shortness of breath, or other cardiac symptoms. Paradoxically, this can be the most dangerous category — 'silent ischemia' is common in diabetics and elderly. Regular cardiac screening is critical even without symptoms.",
-            "risk":"Variable", "color":"#ffd740",
-            "voice_q":"Explain Asymptomatic heart condition and why it can be dangerous",
-        },
-        {
-            "icon":"✅", "term":"Normal ECG", "cat":"Resting ECG",
-            "short":"Heart's electrical activity shows no abnormality",
-            "detail":"A Normal ECG means all electrical intervals (PR, QRS, QT) are within normal range, P waves and T waves are properly shaped, and no ST changes, arrhythmias, or bundle branch blocks are detected. This is a positive finding, but annual monitoring is still advised.",
-            "risk":"Low", "color":"#69f0ae",
-            "voice_q":"What does a Normal ECG result mean for heart health",
-        },
-        {
-            "icon":"⚠️", "term":"ST-T Abnormality", "cat":"Resting ECG",
-            "short":"Irregular repolarization of the heart on ECG",
-            "detail":"ST-T Wave Abnormality indicates the heart's recovery phase (repolarization) is irregular. Causes include myocardial ischemia, left ventricular hypertrophy, electrolyte imbalances, or medication effects. It significantly raises cardiac risk and requires specialist evaluation.",
-            "risk":"High", "color":"#e8294c",
-            "voice_q":"Explain ST-T Wave Abnormality on ECG and what it means for the heart",
-        },
-        {
-            "icon":"🫶", "term":"LV Hypertrophy", "cat":"Resting ECG",
-            "short":"Thickened left ventricle heart muscle wall",
-            "detail":"Left Ventricular Hypertrophy (LVH) means the heart's main pumping chamber has a thickened wall — usually from working against chronically high blood pressure. LVH significantly increases risk of heart failure, stroke, and sudden cardiac death. Requires blood pressure control.",
-            "risk":"High", "color":"#e8294c",
-            "voice_q":"Explain LV Hypertrophy — what it is and why it matters",
-        },
-        {
-            "icon":"📈", "term":"Upsloping ST", "cat":"ST Slope",
-            "short":"ST segment slopes upward — lowest risk ST pattern",
-            "detail":"Upsloping ST segment is the least concerning of the three slope patterns. The ST segment rises positively after the QRS complex. While still associated with moderate cardiac risk, it's generally less indicative of severe ischemia than flat or downsloping patterns.",
-            "risk":"Moderate", "color":"#ffd740",
-            "voice_q":"Explain Upsloping ST segment and what it means on a stress ECG",
-        },
-        {
-            "icon":"➖", "term":"Flat ST Segment", "cat":"ST Slope",
-            "short":"Horizontal ST — intermediate to high cardiac risk",
-            "detail":"Flat (horizontal) ST segment means the ST lies parallel to the baseline after the QRS. This is the intermediate pattern with higher risk than upsloping. Often associated with subendocardial ischemia and coronary artery disease. Requires echocardiography or angiography evaluation.",
-            "risk":"High", "color":"#e8294c",
-            "voice_q":"Explain Flat ST segment on ECG and its cardiac significance",
-        },
-        {
-            "icon":"📉", "term":"Downsloping ST", "cat":"ST Slope",
-            "short":"Most serious ST pattern — strongly suggests severe ischemia",
-            "detail":"Downsloping ST segment is the most serious of the three slope patterns — highest cardiac risk. The ST segment slopes downward after the QRS, strongly indicating severe myocardial ischemia and significant coronary artery blockage. Urgent cardiologist consultation is required.",
-            "risk":"Very High", "color":"#e8294c",
-            "voice_q":"Explain Downsloping ST segment — why is it the most dangerous ST pattern",
-        },
-    ]
-
-    # Render term cards in 2 columns
-    for i in range(0, len(TERMS), 2):
-        c1, c2 = st.columns(2)
-        for col, term in zip([c1, c2], TERMS[i:i+2]):
-            with col:
-                risk_bg = "rgba(232,41,76,.15)" if term["risk"] in ("High","Very High") else \
-                          "rgba(255,215,64,.12)" if term["risk"] == "Moderate" else \
-                          "rgba(105,240,174,.10)"
-                st.markdown(f"""
-<div class="glass-card" style="border-left:3px solid {term['color']};padding:18px 20px;">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-    <span style="font-size:26px;">{term['icon']}</span>
-    <div>
-      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;">{term['term']}</div>
-      <div style="font-size:11px;color:rgba(200,200,230,.45);letter-spacing:1px;text-transform:uppercase;">{term['cat']}</div>
-    </div>
-    <div style="margin-left:auto;background:{risk_bg};border:1px solid {term['color']}44;
-    border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:{term['color']};">
-      {term['risk']} Risk
-    </div>
-  </div>
-  <div style="font-size:13px;font-weight:600;color:rgba(220,220,250,.9);margin-bottom:6px;">{term['short']}</div>
-  <div style="font-size:12px;color:rgba(190,190,220,.65);line-height:1.6;">{term['detail']}</div>
-</div>""", unsafe_allow_html=True)
+    # Stats row
+    c1,c2,c3,c4 = st.columns(4)
+    c1.metric("👥 Registered Users", str(len(USERS)), "Active accounts")
+    c2.metric("👨‍⚕️ Doctors", str(len(DOCTORS)), "Specialists")
+    c3.metric("🏥 Hospitals", str(len(HOSPITALS)), "Bangalore")
+    c4.metric("🤖 AI Model", "v3.0", "Ensemble RF+GB")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("### 🔊 Voice Explainer — Hear Any Term in 11 Languages")
-    st.markdown('<div class="psub">Alex will speak the explanation in your selected language</div>', unsafe_allow_html=True)
-    alex_siri_component(height=820, api_key=api_key, lang_bcp=lang_bcp)
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("""
+<div class="glass-card">
+  <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:14px;">👥 User Accounts</div>""", unsafe_allow_html=True)
+        for uname, udata in USERS.items():
+            badge_color = "#e8294c" if udata["role"]=="admin" else "#7b2ff7" if udata["role"]=="doctor" else "#00e676"
+            st.markdown(f"""
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07);">
+  <div style="font-size:22px;">{'🛡️' if udata['role']=='admin' else '👨‍⚕️' if udata['role']=='doctor' else '🧑'}</div>
+  <div style="flex:1;">
+    <div style="font-weight:600;font-size:14px;">{udata['name']}</div>
+    <div style="font-size:11px;color:rgba(200,200,230,.5);">@{uname}</div>
+  </div>
+  <div style="background:{badge_color}22;border:1px solid {badge_color}55;color:{badge_color};
+  padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;">
+    {udata['role']}
+  </div>
+</div>""", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+<div class="glass-card">
+  <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:14px;">⚙️ System Status</div>""", unsafe_allow_html=True)
+        statuses = [
+            ("🤖 AI Model","Loaded" if model else "Not Found", "#00e676" if model else "#e8294c"),
+            ("📊 Prediction Engine","Active","#00e676"),
+            ("🎙️ Voice AI (Alex)","English Mode","#00e676"),
+            ("🗺️ Hospital Map","Folium Active" if HAS_FOLIUM else "Fallback Links","#00e676" if HAS_FOLIUM else "#ffd740"),
+            ("🔊 gTTS Audio","Available" if HAS_GTTS else "Not Installed","#00e676" if HAS_GTTS else "#ffd740"),
+            ("🌐 Language","English Only (Locked)","#00e676"),
+            ("🎬 Background Video","YouTube (–10s trim)","#00e676"),
+        ]
+        for lbl, val, col in statuses:
+            st.markdown(f"""
+<div style="display:flex;justify-content:space-between;align-items:center;
+padding:9px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:13px;">
+  <span style="color:rgba(200,200,230,.75);">{lbl}</span>
+  <span style="color:{col};font-weight:700;">{val}</span>
+</div>""", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""
+<div class="glass-card">
+  <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:14px;">📋 Doctor Roster</div>""", unsafe_allow_html=True)
+    cols = st.columns(3)
+    for i, d in enumerate(DOCTORS):
+        with cols[i % 3]:
+            st.markdown(f"""
+<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:13px;">
+  <div style="font-weight:700;">{d['av']} {d['name']}</div>
+  <div style="color:#c84b9e;font-size:11px;margin:2px 0;">{d['spec']}</div>
+  <div style="color:rgba(200,200,230,.55);font-size:11px;">{d['hosp']}</div>
+  <div style="color:#ffd740;font-size:11px;">⭐ {d['rating']} · {d['exp']}</div>
+</div>""", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 # ═════════════════════════════════════════════════════════════
@@ -1470,21 +1263,19 @@ border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;">
   <span style="color:rgba(200,200,230,.45);font-size:11px;">{ui.get('role','').title()}</span>
 </div>""", unsafe_allow_html=True)
 
-        # Language
-        st.markdown('<div style="font-size:11px;color:rgba(200,200,230,.35);letter-spacing:1.5px;margin-bottom:6px;">🌐 LANGUAGE</div>', unsafe_allow_html=True)
-        lo = {k:f"{v['flag']} {v['name']}" for k,v in LANG.items()}
-        sel = st.selectbox("", list(lo.values()), index=list(lo.keys()).index(st.session_state.language), label_visibility="collapsed")
-        for k,v in lo.items():
-            if v==sel and st.session_state.language!=k:
-                st.session_state.language=k; st.rerun()
-
         st.markdown("<hr style='border-color:rgba(255,255,255,.07);margin:14px 0;'>", unsafe_allow_html=True)
         st.markdown('<div style="font-size:11px;color:rgba(200,200,230,.35);letter-spacing:1.5px;margin-bottom:8px;">NAVIGATION</div>', unsafe_allow_html=True)
 
         if st.session_state.logged_in:
-            for pk,lbl in [("home",T("nav_home")),("prediction",T("nav_predict")),("voice",T("nav_voice")),("terms","📖 Medical Terms"),("doctors",T("nav_doctors")),("hospitals",T("nav_hospitals")),("about",T("nav_about"))]:
+            for pk,lbl in [("home",T("nav_home")),("prediction",T("nav_predict")),("voice",T("nav_voice")),("doctors",T("nav_doctors")),("hospitals",T("nav_hospitals")),("about",T("nav_about"))]:
                 if st.button(lbl, key=f"n_{pk}", use_container_width=True):
                     st.session_state.page=pk; st.rerun()
+            # Admin-only panel
+            if USERS.get(st.session_state.username, {}).get("role") == "admin":
+                st.markdown("<hr style='border-color:rgba(255,255,255,.07);margin:8px 0;'>", unsafe_allow_html=True)
+                st.markdown('<div style="font-size:10px;color:rgba(200,200,230,.3);letter-spacing:1.5px;margin-bottom:4px;">ADMIN</div>', unsafe_allow_html=True)
+                if st.button("🛡️ Admin Dashboard", key="n_admin", use_container_width=True):
+                    st.session_state.page="admin"; st.rerun()
             st.markdown("<hr style='border-color:rgba(255,255,255,.07);margin:12px 0;'>", unsafe_allow_html=True)
             if st.button(T("nav_logout"), use_container_width=True):
                 st.session_state.logged_in=False; st.session_state.page="login"; st.rerun()
@@ -1505,7 +1296,7 @@ pandas folium streamlit-folium gtts
 #  MAIN
 # ═════════════════════════════════════════════════════════════
 def main():
-    inject_video_background("A8hMBdwGnxM")   # ← YouTube video as background
+    inject_video_background("6nKYfealjBg")   # ← YouTube video as background
     inject_css()
     render_sidebar()
 
@@ -1513,12 +1304,9 @@ def main():
         page_login() if st.session_state.page=="login" else page_blocked()
     else:
         {"home":page_home,"prediction":page_prediction,"voice":page_voice,
-         "terms":page_medical_terms,
-         "doctors":page_doctors,"hospitals":page_hospitals,"about":page_about
+         "doctors":page_doctors,"hospitals":page_hospitals,"about":page_about,
+         "admin":page_admin
          }.get(st.session_state.page, page_home)()
 
 if __name__ == "__main__":
     main()
-
-
-
