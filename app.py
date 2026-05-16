@@ -1,6 +1,6 @@
 # ============================================================
 # CARDIOAI v3.0 — Heart Disease Prediction System
-# YouTube Background | Siri-Like Alex AI | 6 Languages
+# Local MP4 Background | Siri-Like Alex AI | 6 Languages
 # 3D Heart | Login | Hospital Map | Doctor Contact
 # Run: streamlit run app_v3.py
 # ============================================================
@@ -88,9 +88,20 @@ def load_model():
 model = load_model()
 
 # ═════════════════════════════════════════════════════════════
-#  YOUTUBE VIDEO BACKGROUND
+#  LOCAL MP4 VIDEO BACKGROUND (muted)
 # ═════════════════════════════════════════════════════════════
-def inject_video_background(video_id="6nKYfealjBg"):
+def inject_video_background(video_path="video.mp4"):
+    import base64
+    import os
+
+    # Encode video to base64 for inline embedding
+    if os.path.exists(video_path):
+        with open(video_path, "rb") as vf:
+            video_b64 = base64.b64encode(vf.read()).decode("utf-8")
+        video_src = f"data:video/mp4;base64,{video_b64}"
+    else:
+        video_src = ""
+
     st.markdown(f"""
 <style>
 /* ── Make app transparent so video shows through ── */
@@ -111,8 +122,8 @@ section[data-testid="stSidebar"] {{
 }}
 </style>
 
-<!-- YouTube fullscreen background -->
-<div id="yt-bg-wrap" style="
+<!-- Local MP4 fullscreen background (muted, looping) -->
+<div id="video-bg-wrap" style="
   position: fixed;
   top: 0; left: 0;
   width: 100vw; height: 100vh;
@@ -120,54 +131,27 @@ section[data-testid="stSidebar"] {{
   pointer-events: none;
   overflow: hidden;
 ">
-  <iframe id="yt-bg-frame"
-    src="https://www.youtube.com/embed/{video_id}?autoplay=1&mute=1&loop=1&playlist={video_id}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&vq=hd720&enablejsapi=1"
-    allow="autoplay; encrypted-media"
-    frameborder="0"
+  <video
+    id="bg-video"
+    autoplay
+    muted
+    loop
+    playsinline
     style="
       position: absolute;
       top: 50%; left: 50%;
-      transform: translate(-50%,-50%);
-      min-width: 177.78vh;
-      min-height: 56.25vw;
-      width: 100vw;
-      height: 100vh;
-      border: none;
+      transform: translate(-50%, -50%);
+      min-width: 100vw;
+      min-height: 100vh;
+      width: auto;
+      height: auto;
+      object-fit: cover;
       opacity: 0.30;
       filter: saturate(1.2) brightness(0.9);
     "
-  ></iframe>
-
-  <!-- YouTube IFrame API: stop 10s before end, then restart -->
-  <script>
-  (function(){{
-    var tag=document.createElement('script');
-    tag.src='https://www.youtube.com/iframe_api';
-    document.head.appendChild(tag);
-    var player;
-    window.onYouTubeIframeAPIReady=function(){{
-      player=new YT.Player('yt-bg-frame',{{
-        events:{{
-          'onReady':function(e){{e.target.playVideo();}},
-          'onStateChange':function(e){{
-            if(e.data===YT.PlayerState.PLAYING){{
-              clearInterval(window._ytChk);
-              window._ytChk=setInterval(function(){{
-                try{{
-                  var dur=player.getDuration();
-                  var cur=player.getCurrentTime();
-                  if(dur>0 && cur >= dur-10){{
-                    player.seekTo(0,true);
-                  }}
-                }}catch(ex){{}}
-              }},500);
-            }}
-          }}
-        }}
-      }});
-    }};
-  }})();
-  </script>
+  >
+    <source src="{video_src}" type="video/mp4">
+  </video>
 
   <!-- Gradient overlay so text stays readable -->
   <div style="
@@ -187,6 +171,17 @@ section[data-testid="stSidebar"] {{
     background: radial-gradient(ellipse at center, transparent 30%, rgba(2,2,12,0.65) 100%);
   "></div>
 </div>
+
+<script>
+  // Ensure video plays (some browsers need a nudge)
+  document.addEventListener('DOMContentLoaded', function() {{
+    var vid = document.getElementById('bg-video');
+    if (vid) {{
+      vid.muted = true;
+      vid.play().catch(function() {{}});
+    }}
+  }});
+</script>
 """, unsafe_allow_html=True)
 
 
@@ -1191,7 +1186,7 @@ def page_admin():
             ("🗺️ Hospital Map","Folium Active" if HAS_FOLIUM else "Fallback Links","#00e676" if HAS_FOLIUM else "#ffd740"),
             ("🔊 gTTS Audio","Available" if HAS_GTTS else "Not Installed","#00e676" if HAS_GTTS else "#ffd740"),
             ("🌐 Language","English Only (Locked)","#00e676"),
-            ("🎬 Background Video","YouTube (–10s trim)","#00e676"),
+            ("🎬 Background Video","Local MP4 (muted)","#00e676"),
         ]
         for lbl, val, col in statuses:
             st.markdown(f"""
@@ -1296,7 +1291,7 @@ pandas folium streamlit-folium gtts
 #  MAIN
 # ═════════════════════════════════════════════════════════════
 def main():
-    inject_video_background("6nKYfealjBg")   # ← YouTube video as background
+    inject_video_background("video.mp4")   # ← Local MP4 video as background (muted)
     inject_css()
     render_sidebar()
 
