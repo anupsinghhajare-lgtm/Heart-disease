@@ -1,15 +1,14 @@
 # ============================================================
-# CARDIOAI v3.0 — Heart Disease Prediction System
-# Local MP4 Background | Siri-Like Alex AI | 6 Languages
+# CARDIOAI v5.0 — Heart Disease Prediction System
+# Animated CSS Background | Siri-Like Alex AI | 6 Languages
 # 3D Heart | Login | Hospital Map | Doctor Contact
-# Run: streamlit run app_v3.py
+# Run: streamlit run app_v5.py
 # ============================================================
 
 import streamlit as st
 import numpy as np
 import joblib
 import pandas as pd
-import os
 from io import BytesIO
 import streamlit.components.v1 as components
 from datetime import datetime
@@ -88,100 +87,74 @@ def load_model():
 model = load_model()
 
 # ═════════════════════════════════════════════════════════════
-#  LOCAL MP4 VIDEO BACKGROUND (muted)
+#  ANIMATED CSS GRADIENT BACKGROUND
 # ═════════════════════════════════════════════════════════════
-def inject_video_background(video_path="video.mp4"):
-    import base64
-    import os
-
-    # Encode video to base64 for inline embedding
-    if os.path.exists(video_path):
-        with open(video_path, "rb") as vf:
-            video_b64 = base64.b64encode(vf.read()).decode("utf-8")
-        video_src = f"data:video/mp4;base64,{video_b64}"
-    else:
-        video_src = ""
-
-    st.markdown(f"""
+def inject_animated_background():
+    st.markdown("""
 <style>
-/* ── Make app transparent so video shows through ── */
-.stApp {{
-    background: transparent !important;
-}}
-.stApp > div, .main, .block-container,
-[data-testid="stAppViewBlockContainer"],
-[data-testid="stMain"] {{
-    background: transparent !important;
-}}
-/* ── Sidebar glassmorphism ── */
-section[data-testid="stSidebar"] {{
-    background: rgba(8, 8, 20, 0.88) !important;
-    backdrop-filter: blur(24px) !important;
-    -webkit-backdrop-filter: blur(24px) !important;
-    border-right: 1px solid rgba(255,255,255,0.06) !important;
-}}
-</style>
+/* ── Animated gradient background ── */
+@keyframes bgShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 
-<!-- Local MP4 fullscreen background (muted, looping) -->
-<div id="video-bg-wrap" style="
+body, .stApp {
+  background: linear-gradient(
+    135deg,
+    #04040f 0%,
+    #0a0318 20%,
+    #0d0522 40%,
+    #07030f 60%,
+    #120420 80%,
+    #04040f 100%
+  ) !important;
+  background-size: 400% 400% !important;
+  animation: bgShift 18s ease infinite !important;
+}
+
+/* Subtle pulsing glow orbs */
+.stApp::before {
+  content: '';
   position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
-  z-index: -9999;
+  top: -20%;
+  left: -10%;
+  width: 60%;
+  height: 60%;
+  background: radial-gradient(ellipse, rgba(200,75,158,0.07) 0%, transparent 70%);
+  animation: orbFloat1 12s ease-in-out infinite alternate;
   pointer-events: none;
-  overflow: hidden;
-">
-  <video
-    id="bg-video"
-    autoplay
-    muted
-    loop
-    playsinline
-    style="
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      min-width: 100vw;
-      min-height: 100vh;
-      width: auto;
-      height: auto;
-      object-fit: cover;
-      opacity: 0.30;
-      filter: saturate(1.2) brightness(0.9);
-    "
-  >
-    <source src="{video_src}" type="video/mp4">
-  </video>
+  z-index: 0;
+}
+.stApp::after {
+  content: '';
+  position: fixed;
+  bottom: -20%;
+  right: -10%;
+  width: 55%;
+  height: 55%;
+  background: radial-gradient(ellipse, rgba(123,47,247,0.07) 0%, transparent 70%);
+  animation: orbFloat2 15s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes orbFloat1 {
+  from { transform: translate(0,0) scale(1); }
+  to   { transform: translate(5%,8%) scale(1.15); }
+}
+@keyframes orbFloat2 {
+  from { transform: translate(0,0) scale(1); }
+  to   { transform: translate(-5%,-6%) scale(1.1); }
+}
 
-  <!-- Gradient overlay so text stays readable -->
-  <div style="
-    position: absolute; top:0; left:0;
-    width:100%; height:100%;
-    background: linear-gradient(
-      135deg,
-      rgba(4,4,16,0.72) 0%,
-      rgba(8,5,22,0.60) 50%,
-      rgba(12,4,18,0.72) 100%
-    );
-  "></div>
-
-  <!-- Vignette -->
-  <div style="
-    position:absolute; top:0; left:0; width:100%; height:100%;
-    background: radial-gradient(ellipse at center, transparent 30%, rgba(2,2,12,0.65) 100%);
-  "></div>
-</div>
-
-<script>
-  // Ensure video plays (some browsers need a nudge)
-  document.addEventListener('DOMContentLoaded', function() {{
-    var vid = document.getElementById('bg-video');
-    if (vid) {{
-      vid.muted = true;
-      vid.play().catch(function() {{}});
-    }}
-  }});
-</script>
+/* ── Sidebar glassmorphism ── */
+section[data-testid="stSidebar"] {
+  background: rgba(8, 8, 20, 0.88) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border-right: 1px solid rgba(255,255,255,0.06) !important;
+}
+</style>
 """, unsafe_allow_html=True)
 
 
@@ -1186,7 +1159,7 @@ def page_admin():
             ("🗺️ Hospital Map","Folium Active" if HAS_FOLIUM else "Fallback Links","#00e676" if HAS_FOLIUM else "#ffd740"),
             ("🔊 gTTS Audio","Available" if HAS_GTTS else "Not Installed","#00e676" if HAS_GTTS else "#ffd740"),
             ("🌐 Language","English Only (Locked)","#00e676"),
-            ("🎬 Background Video","Local MP4 (muted)","#00e676"),
+            ("🎨 Background","Animated CSS Gradient","#00e676"),
         ]
         for lbl, val, col in statuses:
             st.markdown(f"""
@@ -1291,7 +1264,7 @@ pandas folium streamlit-folium gtts
 #  MAIN
 # ═════════════════════════════════════════════════════════════
 def main():
-    inject_video_background("video.mp4")   # ← Local MP4 video as background (muted)
+    inject_animated_background()   # ← CSS animated gradient background
     inject_css()
     render_sidebar()
 
