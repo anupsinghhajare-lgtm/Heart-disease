@@ -852,6 +852,8 @@ border-radius:14px;padding:14px 20px;font-size:13px;color:#ffd740;">
 Always consult a qualified cardiologist for clinical evaluation.
 </div>""", unsafe_allow_html=True)
 
+    render_page_nav("home")
+
 
 # ═════════════════════════════════════════════════════════════
 #  PAGE: PREDICTION
@@ -942,6 +944,8 @@ def page_prediction():
         df = pd.DataFrame([{"Date":datetime.now().strftime("%Y-%m-%d %H:%M"),"Age":age,"Sex":sex_o,"CP":cp_o,"BP":trestbps,"Chol":chol,"FBS":fbs_o,"ECG":recg_o,"HR":thalach,"Angina":ang_o,"Oldpeak":oldpeak,"Slope":slope_o,"Prediction":"Disease" if pred==1 else "No Disease","Risk %":round(prob*100,2)}])
         st.download_button(T("download"),df.to_csv(index=False),"heart_report.csv","text/csv",use_container_width=True)
 
+    render_page_nav("prediction")
+
 
 # ═════════════════════════════════════════════════════════════
 #  PAGE: ALEX VOICE ASSISTANT
@@ -963,6 +967,8 @@ Add your Anthropic API key (sidebar) for live AI answers.
 </div>""", unsafe_allow_html=True)
 
     alex_siri_component(height=720, api_key=api_key, lang_bcp=lang_bcp)
+
+    render_page_nav("voice")
 
 
 # ═════════════════════════════════════════════════════════════
@@ -999,6 +1005,8 @@ def page_doctors():
   </div>
 </div>
 <br>""", unsafe_allow_html=True)
+
+    render_page_nav("doctors")
 
 
 # ═════════════════════════════════════════════════════════════
@@ -1074,6 +1082,8 @@ function geo(){
      📍 Directions</a>
 </div>""", unsafe_allow_html=True)
 
+    render_page_nav("hospitals")
+
 
 # ═════════════════════════════════════════════════════════════
 #  PAGE: ABOUT
@@ -1108,6 +1118,8 @@ def page_about():
   </div>
   <div style="margin-top:10px;font-size:12px;color:rgba(200,200,230,.4);">📍 5th Floor, Prestige Tech Park, Outer Ring Road, Bengaluru – 560103</div>
 </div>""", unsafe_allow_html=True)
+
+    render_page_nav("about")
 
 
 # ═════════════════════════════════════════════════════════════
@@ -1185,6 +1197,80 @@ border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:13px;">
   <div style="color:#ffd740;font-size:11px;">⭐ {d['rating']} · {d['exp']}</div>
 </div>""", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
+
+
+# ═════════════════════════════════════════════════════════════
+#  BOTTOM PAGE NAVIGATION (Prev / Next)
+# ═════════════════════════════════════════════════════════════
+PAGE_ORDER = ["home", "prediction", "voice", "doctors", "hospitals", "about"]
+PAGE_LABELS = {
+    "home":       ("❤️", "Home"),
+    "prediction": ("🔬", "Prediction"),
+    "voice":      ("🎙️", "Alex – Voice AI"),
+    "doctors":    ("👨‍⚕️", "Doctors"),
+    "hospitals":  ("🏥", "Hospitals"),
+    "about":      ("ℹ️", "About"),
+}
+
+def render_page_nav(current_page: str):
+    """Render a styled Prev / Page indicator / Next bar at the bottom of any page."""
+    if current_page not in PAGE_ORDER:
+        return
+
+    idx  = PAGE_ORDER.index(current_page)
+    prev = PAGE_ORDER[idx - 1] if idx > 0              else None
+    nxt  = PAGE_ORDER[idx + 1] if idx < len(PAGE_ORDER)-1 else None
+
+    # Progress dots
+    dots = "".join(
+        f'<span style="width:{"10" if i==idx else "7"}px;height:{"10" if i==idx else "7"}px;'
+        f'border-radius:50%;background:{"#e8294c" if i==idx else "rgba(255,255,255,.18)"};'
+        f'display:inline-block;margin:0 4px;transition:all .3s;"></span>'
+        for i in range(len(PAGE_ORDER))
+    )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown(f"""
+<div style="border-top:1px solid rgba(255,255,255,.07);margin-top:10px;padding-top:18px;
+display:flex;align-items:center;justify-content:space-between;gap:12px;">
+
+  <!-- Prev placeholder or label -->
+  <div style="flex:1;text-align:left;">
+    {'<span style="color:rgba(200,200,230,.28);font-size:13px;">← Start</span>' if not prev else ''}
+  </div>
+
+  <!-- Dot progress -->
+  <div style="display:flex;align-items:center;gap:0;">{dots}</div>
+
+  <!-- Next placeholder -->
+  <div style="flex:1;text-align:right;">
+    {'<span style="color:rgba(200,200,230,.28);font-size:13px;">End →</span>' if not nxt else ''}
+  </div>
+
+</div>""", unsafe_allow_html=True)
+
+    left_col, mid_col, right_col = st.columns([1, 2, 1])
+
+    with left_col:
+        if prev:
+            pi, pl = PAGE_LABELS[prev]
+            if st.button(f"← {pi} {pl}", key="nav_prev", use_container_width=True):
+                st.session_state.page = prev; st.rerun()
+
+    with mid_col:
+        ci, cl = PAGE_LABELS[current_page]
+        st.markdown(f"""
+<div style="text-align:center;padding:10px 0;">
+  <span style="font-size:12px;color:rgba(200,200,230,.35);letter-spacing:1.5px;">YOU ARE HERE</span><br>
+  <span style="font-size:15px;font-weight:700;color:#f0f0fa;">{ci} {cl}</span>
+  <span style="font-size:11px;color:rgba(200,200,230,.35);"> &nbsp;·&nbsp; {idx+1} / {len(PAGE_ORDER)}</span>
+</div>""", unsafe_allow_html=True)
+
+    with right_col:
+        if nxt:
+            ni, nl = PAGE_LABELS[nxt]
+            if st.button(f"{ni} {nl} →", key="nav_next", use_container_width=True):
+                st.session_state.page = nxt; st.rerun()
 
 
 # ═════════════════════════════════════════════════════════════
