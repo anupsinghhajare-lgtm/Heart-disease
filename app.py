@@ -73,9 +73,8 @@ LANG = {
 }
 
 # ── Session State ─────────────────────────────────────────────
-for k,v in {"logged_in":False,"username":"","page":"login","language":"en","pred_result":None}.items():
+for k,v in {"logged_in":False,"username":"","page":"login","language":"en","pred_result":None,"api_key":""}.items():
     if k not in st.session_state: st.session_state[k] = v
-st.session_state.language = "en"  # English only — locked
 
 def T(key): return LANG[st.session_state.language].get(key, LANG["en"].get(key, key))
 
@@ -952,7 +951,7 @@ def page_voice():
     st.markdown('<div class="psub">Siri-like voice AI for cardiac health — speak, listen, and get answers in English</div>', unsafe_allow_html=True)
 
     lang_bcp = "en-US"
-    api_key  = st.sidebar.text_input("🔑 Anthropic API Key (for live AI)", type="password", help="Enter your Anthropic key. Without it, Alex uses built-in responses.")
+    api_key  = st.session_state.get("api_key", "")
 
     st.markdown("""
 <div style="background:rgba(123,47,247,.12);border:1px solid rgba(123,47,247,.3);
@@ -1213,50 +1212,159 @@ def page_blocked():
 # ═════════════════════════════════════════════════════════════
 def render_sidebar():
     with st.sidebar:
+        # ── Logo & Brand ──────────────────────────────────────────
         st.markdown("""
-<div style="text-align:center;padding:16px 0 22px;">
-  <div class="hb" style="font-size:42px;">❤️</div>
-  <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:2px;
-  background:linear-gradient(90deg,#e8294c,#c84b9e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+<div style="text-align:center;padding:20px 0 18px;">
+  <div class="hb" style="font-size:48px;line-height:1;">❤️</div>
+  <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;letter-spacing:2px;
+  background:linear-gradient(90deg,#e8294c,#c84b9e,#7b2ff7);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-top:6px;">
   CardioAI</div>
-  <div style="font-size:10px;color:rgba(200,200,230,.3);letter-spacing:2px;">CARDIAC HEALTH PLATFORM</div>
+  <div style="font-size:9px;color:rgba(200,200,230,.3);letter-spacing:3px;margin-top:2px;">
+  CARDIAC HEALTH PLATFORM v5.0</div>
 </div>""", unsafe_allow_html=True)
 
+        # ── User Profile Card ──────────────────────────────────────
         if st.session_state.logged_in:
             ui = USERS.get(st.session_state.username, {})
+            role_icon = "🛡️" if ui.get("role")=="admin" else "👨‍⚕️" if ui.get("role")=="doctor" else "🧑"
+            role_color= "#e8294c" if ui.get("role")=="admin" else "#7b2ff7" if ui.get("role")=="doctor" else "#00e676"
             st.markdown(f"""
-<div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
-border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;">
-  👤 <b>{ui.get('name','User')}</b><br>
-  <span style="color:rgba(200,200,230,.45);font-size:11px;">{ui.get('role','').title()}</span>
+<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);
+border-radius:14px;padding:13px 15px;margin-bottom:14px;">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div style="font-size:28px;">{role_icon}</div>
+    <div>
+      <div style="font-weight:700;font-size:14px;color:#f0f0fa;">{ui.get('name','User')}</div>
+      <div style="font-size:11px;font-weight:600;
+        background:{role_color}22;border:1px solid {role_color}55;color:{role_color};
+        display:inline-block;padding:1px 8px;border-radius:20px;margin-top:3px;text-transform:uppercase;letter-spacing:.5px;">
+        {ui.get('role','user')}
+      </div>
+    </div>
+  </div>
 </div>""", unsafe_allow_html=True)
 
-        st.markdown("<hr style='border-color:rgba(255,255,255,.07);margin:14px 0;'>", unsafe_allow_html=True)
-        st.markdown('<div style="font-size:11px;color:rgba(200,200,230,.35);letter-spacing:1.5px;margin-bottom:8px;">NAVIGATION</div>', unsafe_allow_html=True)
+        # ── Quick Stats ────────────────────────────────────────────
+        if st.session_state.logged_in:
+            pred = st.session_state.get("pred_result")
+            pred_html = (
+                f'<span style="color:#e8294c;font-weight:700;">{int(pred["proba"]*100)}% risk</span>'
+                if pred and pred["pred"]==1
+                else f'<span style="color:#00e676;font-weight:700;">{int((1-pred["proba"])*100)}% healthy</span>'
+                if pred
+                else '<span style="color:rgba(200,200,230,.4);">No scan yet</span>'
+            )
+            st.markdown(f"""
+<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+border-radius:12px;padding:11px 14px;margin-bottom:14px;font-size:12px;">
+  <div style="color:rgba(200,200,230,.4);font-size:10px;letter-spacing:1px;margin-bottom:8px;">QUICK STATS</div>
+  <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+    <span style="color:rgba(200,200,230,.6);">👨‍⚕️ Doctors</span>
+    <span style="color:#c84b9e;font-weight:700;">{len(DOCTORS)}</span>
+  </div>
+  <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+    <span style="color:rgba(200,200,230,.6);">🏥 Hospitals</span>
+    <span style="color:#7b2ff7;font-weight:700;">{len(HOSPITALS)}</span>
+  </div>
+  <div style="display:flex;justify-content:space-between;padding:5px 0;">
+    <span style="color:rgba(200,200,230,.6);">🔬 Last Scan</span>
+    {pred_html}
+  </div>
+</div>""", unsafe_allow_html=True)
+
+        # ── Navigation ─────────────────────────────────────────────
+        st.markdown("<hr style='border-color:rgba(255,255,255,.07);margin:10px 0 12px;'>", unsafe_allow_html=True)
+        st.markdown('<div style="font-size:10px;color:rgba(200,200,230,.35);letter-spacing:1.5px;margin-bottom:8px;">NAVIGATION</div>', unsafe_allow_html=True)
 
         if st.session_state.logged_in:
-            for pk,lbl in [("home",T("nav_home")),("prediction",T("nav_predict")),("voice",T("nav_voice")),("doctors",T("nav_doctors")),("hospitals",T("nav_hospitals")),("about",T("nav_about"))]:
-                if st.button(lbl, key=f"n_{pk}", use_container_width=True):
-                    st.session_state.page=pk; st.rerun()
+            nav_items = [
+                ("home",     T("nav_home")),
+                ("prediction",T("nav_predict")),
+                ("voice",    T("nav_voice")),
+                ("doctors",  T("nav_doctors")),
+                ("hospitals",T("nav_hospitals")),
+                ("about",    T("nav_about")),
+            ]
+            for pk, lbl in nav_items:
+                is_active = st.session_state.page == pk
+                if is_active:
+                    st.markdown(f"""
+<div style="background:linear-gradient(135deg,rgba(232,41,76,.25),rgba(200,75,158,.15));
+border:1px solid rgba(232,41,76,.4);border-radius:12px;padding:10px 14px;
+margin-bottom:4px;font-size:14px;font-weight:600;color:#f0f0fa;
+display:flex;align-items:center;gap:6px;">
+  <span style="width:6px;height:6px;background:#e8294c;border-radius:50%;display:inline-block;"></span>
+  {lbl}
+</div>""", unsafe_allow_html=True)
+                else:
+                    if st.button(lbl, key=f"n_{pk}", use_container_width=True):
+                        st.session_state.page = pk; st.rerun()
+
             # Admin-only panel
             if USERS.get(st.session_state.username, {}).get("role") == "admin":
                 st.markdown("<hr style='border-color:rgba(255,255,255,.07);margin:8px 0;'>", unsafe_allow_html=True)
-                st.markdown('<div style="font-size:10px;color:rgba(200,200,230,.3);letter-spacing:1.5px;margin-bottom:4px;">ADMIN</div>', unsafe_allow_html=True)
-                if st.button("🛡️ Admin Dashboard", key="n_admin", use_container_width=True):
-                    st.session_state.page="admin"; st.rerun()
+                st.markdown('<div style="font-size:10px;color:rgba(200,200,230,.3);letter-spacing:1.5px;margin-bottom:6px;">ADMIN ZONE</div>', unsafe_allow_html=True)
+                is_admin = st.session_state.page == "admin"
+                if is_admin:
+                    st.markdown("""
+<div style="background:linear-gradient(135deg,rgba(232,41,76,.25),rgba(200,75,158,.15));
+border:1px solid rgba(232,41,76,.4);border-radius:12px;padding:10px 14px;
+margin-bottom:4px;font-size:14px;font-weight:600;color:#f0f0fa;">
+  <span style="width:6px;height:6px;background:#e8294c;border-radius:50%;display:inline-block;margin-right:6px;"></span>
+  🛡️ Admin Dashboard
+</div>""", unsafe_allow_html=True)
+                else:
+                    if st.button("🛡️ Admin Dashboard", key="n_admin", use_container_width=True):
+                        st.session_state.page = "admin"; st.rerun()
+
+            # ── API Key ────────────────────────────────────────────
+            st.markdown("<hr style='border-color:rgba(255,255,255,.07);margin:10px 0;'>", unsafe_allow_html=True)
+            st.markdown('<div style="font-size:10px;color:rgba(200,200,230,.35);letter-spacing:1.5px;margin-bottom:6px;">ALEX VOICE AI</div>', unsafe_allow_html=True)
+            api_key_input = st.text_input(
+                "🔑 Anthropic API Key",
+                value=st.session_state.get("api_key",""),
+                type="password",
+                placeholder="sk-ant-... (optional)",
+                help="Enables live AI answers in Alex. Without it, built-in responses are used."
+            )
+            if api_key_input != st.session_state.get("api_key",""):
+                st.session_state.api_key = api_key_input
+
+            # ── Language ───────────────────────────────────────────
+            st.markdown("<hr style='border-color:rgba(255,255,255,.07);margin:10px 0;'>", unsafe_allow_html=True)
+            st.markdown('<div style="font-size:10px;color:rgba(200,200,230,.35);letter-spacing:1.5px;margin-bottom:6px;">LANGUAGE</div>', unsafe_allow_html=True)
+            lang_options = {code: f"{v['flag']} {v['name']}" for code, v in LANG.items()}
+            selected_lang = st.selectbox(
+                "Interface Language",
+                options=list(lang_options.keys()),
+                format_func=lambda c: lang_options[c],
+                index=list(lang_options.keys()).index(st.session_state.language),
+                label_visibility="collapsed"
+            )
+            if selected_lang != st.session_state.language:
+                st.session_state.language = selected_lang; st.rerun()
+
             st.markdown("<hr style='border-color:rgba(255,255,255,.07);margin:12px 0;'>", unsafe_allow_html=True)
-            if st.button(T("nav_logout"), use_container_width=True):
-                st.session_state.logged_in=False; st.session_state.page="login"; st.rerun()
+            if st.button(T("nav_logout"), key="n_logout", use_container_width=True):
+                st.session_state.logged_in = False
+                st.session_state.page = "login"
+                st.session_state.pred_result = None
+                st.rerun()
         else:
             if st.button("🔑 Login", use_container_width=True):
-                st.session_state.page="login"; st.rerun()
+                st.session_state.page = "login"; st.rerun()
 
+        # ── Footer ─────────────────────────────────────────────────
         st.markdown("""
-<div style="margin-top:20px;background:rgba(255,255,255,.03);border-radius:10px;
-padding:12px;font-size:11px;color:rgba(200,200,230,.3);line-height:1.8;">
-<b style="color:rgba(200,200,230,.5);">Install packages:</b><br>
-pip install streamlit numpy joblib<br>
-pandas folium streamlit-folium gtts
+<div style="margin-top:18px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);
+border-radius:10px;padding:12px;font-size:11px;color:rgba(200,200,230,.3);line-height:1.9;text-align:center;">
+  <div style="color:rgba(200,200,230,.45);font-weight:600;margin-bottom:4px;">📦 Required Packages</div>
+  streamlit · numpy · joblib<br>
+  pandas · folium · streamlit-folium · gtts
+  <div style="margin-top:8px;font-size:10px;color:rgba(200,200,230,.2);">
+    CardioAI v5.0 · © 2025 Bengaluru
+  </div>
 </div>""", unsafe_allow_html=True)
 
 
